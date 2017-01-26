@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="UTF-8">
+    <title>Stockfish Evaluation Guide</title>
+    <link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAM1BMVEVHcEwAAACJiYnv7+9CQkLe3t54eHhUVFRmZmarq6sICAj///8wMDCampocHBy8vLzNzc24bsB5AAAAAXRSTlMAQObYZgAAAG1JREFUeF5lj1kKAzEMQyPZ2We7/2nr1K0JzPsxegiMUkpzI0V+SJ5ixvOtWIzHzMongMoK0EUGNNs9/g0CMp0QLe9CBgClhJhSLhjFhdPbABhiIRd0F8JoSG29lwEc4uLGl8HfvClqKb6+5n8AQhEH6io/X30AAAAASUVORK5CYII=" rel="shortcut icon">
+    <style>
+        @media screen {
+            .graph
+            {
+                background-image: radial-gradient(ellipse farthest-corner at center, #5a5a5a 0%, #262626 100%);
+                color: #ffffff;
+                font-size: 11px;
+                line-height: 17px;
+                position: relative;
+                display: inline-block;
+                padding: 10px 10px 40px 10px;
+            }
+            .graph .label
+            {
+                text-align: right;
+                margin-right: 500px;
+                opacity: 0.8;
+                white-space: nowrap;
+                height: 17px;
+            }
+            .graph .label:hover
+            {
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            .graph .line0
+            {
+                background-color: #ffffff;
+                opacity: 0.5;
+                position: absolute;
+                bottom: 41px;
+                top: 11px;
+                right: 258px;
+                width: 1px;                
+            }
+            .graph .line1
+            {
+                background-color: #ffffff;
+                opacity: 0.2;
+                position: absolute;
+                bottom: 41px;
+                top: 11px;
+                width: 1px;                
+            }
+            .graph .xlabel
+            {
+                opacity: 0.8;
+                position: absolute;
+                bottom: 17px;
+                width: 20px;
+                text-align: center;
+            }               
+            .graph .bar
+            {
+                box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.5);
+                height: 7px;
+                position: absolute;
+            }
+            .graph .background
+            {
+                border: solid 1px #ffffff;
+                opacity: 0.2;
+                position: absolute;
+                bottom: 40px;
+                top: 10px;
+                right: 15px;
+                width: 485px;
+            }
+            .cb
+            {
+                position: relative;
+            }
+            .cb > div
+            {
+                position: absolute;
+                width: 28px;
+                height: 28px;
+                background-repeat: none;
+                background-position: center;
+                font-weight: bold;
+                line-height: 28px;
+            }
+            .cbTable
+            {
+                width: 100%;
+                background: white;
+                font-size: 88%;
+                border: 1px #b0b0b0 solid;
+                padding: 0;
+                margin: auto;
+            }
+            .cbTable td
+            {
+                vertical-align: middle;
+                min-width: 18px;
+            }
+            .cbTable td.cbCell
+            {
+                padding: 0;
+                vertical-align: top;
+                border: 1px #b0b0b0 solid;
+                width: 224px;
+                height: 224px;
+            }
+            .cb > .l { background-color: #fffffa; }
+            .cb > .d { background-color: #83a5d2; }
+            .cb > .h { background-image: linear-gradient(to bottom right, #666666,#000000); color: #fffffa; }
+            .cb > .s { font-size: 80%; }
+            .cb > .h1:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd0000; border-radius:10px;}
+            .cb > .h2:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd00dd; border-radius:10px;}
+            .cb > .h1.h2:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd6600; border-radius:10px; }
+            .cb > .k { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAADlklEQVRIie2VX0gjdxDHPxvramw9zNKoscoJNYlaqMUnX2JR2ggVi39o8aVFfSqCos8WQYriP4RA8eFQHyL0oRDFmtZYpKjUiIiIhyCYksY/wVC9KDExGrzdPtx66GmOBto+lH5h2NnZme/szG92Fv7Hv4hGVf5RPAH2VHmSSKCQYCIt0Krqo0D0rwa+kWCi50Cxql8nGJsQ5oGwKvN/B6EGeBd4DCSptlLgGaCo8ky1AbwFvAdI8QjvtS45OfnL+vr6b0tKSjSCILC+vq7Mz89PRSKRX24lRdWrMzMz7dXV1Y+Li4s10WhUWV5ePltYWPgMWOUV55fIysr6yOl0fi9JknZubk48Pj4WKyoqxOHh4fdjsdjHGxsbMpAKoNFo5K6urg9tNpvh4OBAdLvdyScnJ2JbW9sjq9X6hdPp/FGW5cCD5bW3t/tHRkZuWvNSJElSHA6HMjY2JguCoCQlJSkOh0MeHR1VtFrtHV9BEJTJyUmlu7s7+OpZ3CClrKzs7enp6XsvEAwGaWhoIBaLCT09PQwNDbG7uyu0trYSjd6dcEVRsNvt5Ofnv3nbfvuMrk5PTxWdTvdgtWrFRCIRrq+vSU9Pj+uXm5vLwcFBLK5DeXn5D0tLS7IoivfadyN+v185PDyM+1yv1yubm5vPjUbjN7e57wzD3t7eT3q9/qu+vr5Ul8slhMNhACRJoqSkhNLSUkRRxOv1EgqF0Gg0hEIhFEUBoLCwkNnZWWVwcPD3paWlzwH5hvuhFZTZ2Ni4PjAwkDszM6OxWCxcXFywvb2Nz+cjHA6TlpaGTqejqKgIs9nM1tYWR0dHVFVVyZ2dnWsul8vKi4+a1yUCEHt7e0OBQCDFbrcjyzImkwlJksjIyCAajXJ+fo7X68Xv92OxWOjv77/u6Oj4bm1trUlt4x3EXao5OTmelpaWgtraWgCePn2Kz+fj6uoKAIPBgNlspqCggNXVVSYmJs4WFxdrgF8f4ou7VDs6OjICgQBWq5VIJILRaCQ7O5vU1FQuLy+5uLjA4/EQDAaprKykvb1dK8vyo+Xl5Qf54lak1+s9zc3NBXV1daSkpLCzs8P+/j5nZ2dotVr0ej0mk4m8vDxWVlYYHx8/dbvdn8arKC5sNtteV1dX1GAwxB1lQBFFUampqYlNTU0pTU1NHySU5BY+AX4GjoE/1OspLzb3zb0H+BrIeB1RIn/YdwCDShhVE/4GxN8A/2n8CeU5f/bTrmMxAAAAAElFTkSuQmCC);}
+            .cb > .q { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAADPklEQVRIie2VX0hbVxzHP/fmz4YpQmpuvEwRXGOlD00fhJpBahXcWlci1JdQ7INU+tCnvpS9byDMMXzuwBfZs4KBIWNsBENhCgWxLYMIMxRLYkxTa4mlmntvH/KLObuaVQZ72n7w45zzvb/f9/s753cOF/63f8k+A74ENFlfAJ4BT4HzgmkSE/unIiOAI/5AsO8UbFqwrxTsWjMyXZlfB2aBK7L+VPkWkfEXwAKqMgc4p8TV51eE63O34BngrVRVBjyCLQjWpcRui9etS2IWJMcDvBJsHwioQh8BL+VjnkZPooJdUmJL4nW7JDFRWWtAQbCXwn10dO+Aq1KJqZC0ynhfxo+lYo/M1W+tSl67cF0V7mN2Syq5K+s48JracfqBy8qOLgtWlpi45NwVjlsqsdcl9BjYA74FfgJ8wKGMN6XSeuUxoFt2V4/5RHL3hKupacAutVv1K3BDKnaA34EUjaucEqx+gW5ITlU4ND5gTyR5F/hRqquTVRShilLEnsTuyvrJh0QAHipkDvBGxgMXrmJvXPhDN6nuBqgdhy0kUHsbDo1+2uJQ64sjMSjCj9yk7ssA8IcU4Pf7/cRiMQYGBjTTNAmHw4TDYR2gWCxSLBbJ5/Pa8vIyKysrHBwc+IVjzU16YsN8Pt8PqVTqTk9Pj3d1dZV0Os3GxgY7OzuUSrW3ahgGhmEQiUQYHBykv7+fbDZbHR0dnT08PLx3KiFAj0QiLzo7O02v96RNH7dqtUoulyvkcrkOGkd7ZM1YbJ/PNz0+Pv69bdue0wjpum7NzMxMnyTyt3nJZLKYSCScYDDovmnHPBgMOolEwpmcnMw3I2y2o9ulUikwNjbG1NQUlmWRzWb/0qNQKIRhGPT29qJpGplMhvn5+VZqv5c/3YQn9mh4ePjniYmJLxYXF0mn01iWRUdHB6FQiPb2dmzbPhLd2trC6/UyNDREMpm0U6nU13Nzc9+cSsgwjJ6+vr5HIyMjbfF4XAsEAmxubtr5fN4ql8s2QFtbm26apqe7u1uvVCpkMhlnaWmptLa2dnF7e7t4KiHF/EB/S0vLUDQaPW+aZpeu62cBbNsuFwqF5+vr69n9/f3fgFUaj/w/YO8B4Y42ZltnDwoAAAAASUVORK5CYII=);}
+            .cb > .r { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAABfklEQVRIie2VMWvCQBTHfwkFrSUqUjCETiKZWtRFKA39HJ07+Ql0c+ikfoMu/TDFUuhaugSnUJCitJpYqovXwYNqmsQoDg7+4JHj3d37v8vdvYMD+44S0XcJnAA/wJP0nQO6bPeBN9m+Ao6Bb+B5kwRywAQYyG8VKABD6RvIdkH2LY/NbSJ0KgMJYCyz7wOf0ieAryX/SPqGcu4/jsKUTNPUNE0DSEvzk/U7PM/TbNsOjBcm5JqmOUmlUlmZ6VqEEOp0OvVs23aD+qMOQyKdTj+22+2qqqqRIvP5nEaj8eK67jUwi5OYnxsWGyzW2ESODSU61R1yENp/odALC5BIJDKWZSUVJeoWgBAi2e12M7NZ+MmOFNJ1vWYYRpxVq/l8vuY4zv02Qs1yuVwyDANiVIdKpVJyHKcJ3MVIbIUW6y+q31phwYJ+fh54KBaLF/V6/YyYtQ5QOp3Oe6/XewVugY91Eyz+yv42NpIxVgjaozGLYz+KuRI/Cot36cBu+AVUmoiF2EIn/gAAAABJRU5ErkJggg==);}
+            .cb > .b { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAABvklEQVRIie2VvUoDQRSFPycKS4JgJEIaQVYt9AEU0olPYGwWbGyExUqsLBSSwkqwsLFZG4WAFnkAwUpS26mgYAqLFOsPGBLBn7HYWVzH7G6ipvPAbe6cOWfunTu78A8YB8a6bbIK3KtY6abRLSBV3HayUXRodAI8qzjultEkMMJnRaPARCdm7WAeuAuY+HEPzP2VyXTQxDRNaZpm0OwOmIoTiWtdAjgEBgEMw8CyLCzLwjAMnzOoOJ3e9xfM4rVHAtJxHOnDcRy9qpnfGK2j3Ytt29K2bf2uJLAWJdQbY1QHXoO8UqnUivcCNNo8fEuMAC7fT6+Hq7ihiKuoCmxnMpmNfD5vtCKUy+Vn13W3FPfHRgCOEGIznU5LoEdbk0IIA9iLE9E3fkM2m91PJpMLhI/ve6PROKjVaou/MioWi/VcLpeK4lQqlWahUEjGacXhCmgSPghN4DxOJNGGkYM35kOKL/BG/gG4BHaAJZULhd66PmAZ7yM6DPTz+Y4E8A4MKO5jIOdznvCmbxc4ijI+w3t4YW3yK3kE3iJ4deA0KKyPdxVIATfAhRIM4kHlwfsXpbX1AZU3geuoiv7RNj4AcY2jxYgPvvgAAAAASUVORK5CYII=);}
+            .cb > .n { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAACOklEQVRIie2UMWgTYRTHf7maXAJBMUEa0UiGOJjQReFAEJGKgQyCg9iAS5DukiWTkwhZsgc7ZBKErg5FN+nqmiGCdThMjfFaj0ST4qXP4S5wXC651LZb//DB99733ft97333PTjTKSkOXHTZl4GbpwF6BxwCKw6kAwyBpZMGvQHEGUNgDPSBDeAJkDgp0GsnuLjGT0VRpNVqjTc3Nw+KxeI2cO04kBVgP5fLSSQScYMEkEQiIdVqVUzTlEajMYxEIo/+BxIC2vl8XkRENE3zgoaTeSaTkZ2dHWk2myNAOyroGWDWajUZjUZ+Ge277Ww2K/1+X9bW1gzg/KKQOPADkGQyKeFweKpsTN+bVCoV0XX9MBqNvloU9BL44xN8LkhVVen1elIqlfYANQhyATACIPvAwG+tXq/L1tbWX+BhEOgFMJoD+QU0gJ7f+urqqpimKeFwuBkE+lIul6XVas3K5DnwANjzA8XjcbEsSzRN2w0CGel0WgqFgjuABXwH7jh73mK3Jd+s2+22rK+v/wYUd+BzHlBb1/Xbuq5PbAv4DNzDLtct4D72O/NVp9MhnU6D3Ru/TfyKZ99TYNs5McAucNeBXMduspdmQQAMwyCVSil42pI3o69O4BBQAD5h/4VXgY/OKefKMAyWl5eXvHu9oIkEeO/MFeADkAqCAIzHY1RVDQFRt99bOj+VgCvMuRevBoPBVNxFQI85Qv+KxWJYliVe/6zSuXUDOMDu2IHqdrtRy7KizjdnOr7+AcVSDH4zL27HAAAAAElFTkSuQmCC);}
+            .cb > .p { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAABGUlEQVRIie3VP0oDQRSA8Z+JfwrBEATrlIIgCoI3EKzES3iTFJZewytYCoI3EMHGxoCaRNGgosRiDMRk18ysKyj4wWtmZ+abee8twz+/nWri/Bms4hW98o8TWEcLbdxh/6dE5+gPxS02YxdXIudVsTQytoCNskVvxmvygItYUSxNdH1O3QsuUStL0kBnRDIsOyhLtPexYZaoL9xqIjE1mvf1/zZbluhEqE8WfZzGiGI5xpPxtLWxUpZkFzd4zhB1cYi570q2jbf1aPRwhKmikhquJ0gGcS90ZyGasuuSFy3prwG4SpAMGmMrb7O89m4Ib08KdeykipYVS8Na3ofpnPG6cKNOgqQiPB2Z5LXkopC+VB5xVmDdH+QdxkVpyH6OOpoAAAAASUVORK5CYII=);}
+            .cb > .K { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAADSUlEQVRIie2TQUgjZxTH/5NJspuJbsgYJhijhowmxIO0k2rxZoMnFwqL4MHNXrx4Wei1N72IHjzsor0IRbo9156EQKW1GBGtqLASAloiipiRGSfJKjNOMvn2kETCmnGxYC/tD95hHm/+//fe933A//yLxKvxqPwMQKrGu8c2+64aD8L6wPonAL4EQADYAeiPYuTxeBLDw8N95XKZJBKJTkmSYg/r8y4WABEAYVSmAIBoNBq9JFUEQbhEZToA8ACIAuDMBO9M5HQ6X9rt9reRSASGYVBHR0cWAL/Ksvxnf38/Xavr6+uj9/f3v/V4PD8xDNPe1dVFzs7OSDabzSuK8grAhukYVqv1m3A4nD8/P681TjRNI/Pz8zrLspfBYDBXy3d0dKjhcLiwu7tL6tna2iI+n+8SwFemRl6vN3VwcEAakUqlCMdxRiKRIHNzc2RgYMBQVbVh7fb2NvF6ve/NfJ5yHJdr+GeVnZ0d4vf7yz6fryzL8n2lxO125wFQjc7oRtd1S6lUgtXa+DJGo1HEYjG4XC6wLGu6maurKxBCdFSeAYDK7apB7Hb7b0tLSyVTBQCCIFA8z1P31UxNTakURf1Yn6PrP66vr//Y2NiI8zzv7OnpuW0im81ib28Pm5ubSCaTkGUZNE2jWCyipaUFFkullBCCmZkZbWFh4e9cLjcGwKhpNOrMy7Ls7yMjI52tra3OlZUV0DSNUCiEtrY2uN1uaJoGURSRyWSQyWQgCALGxsawuLh4lUwm/1IU5QWAfL2o2QqsDodDmpycdE1MTAAA0uk0Tk9PQQgBRVFoampCJBKB3+/H+vo6xsfHdVEU36iq+j3qzuZW0MSoxDCMIkmSa2hoCIZhoLu7G4FA4HZNiqJgdnYWoihCEARwHKceHx//0sjkPiNomvasubkZq6urn51obW0N8Xj8KQCXmZ6pEcMwBcMw2MHBQWiaht7e3jsTTU9P4+TkBLFYDMFgUBVFMW+mZ4rD4UjzPK8uLy8TwzBMH+bh4SEZHR3VbTabDuALM7373gNF0/RzjuNe39zcfB0IBPRQKETbbDZbuVw2Li4uiqlUylYsFiVN094VCoUfACj/xKgeKwAeQHtd7gOAND65xv8dPgLtQ+x+iM8VUAAAAABJRU5ErkJggg==);}
+            .cb > .Q { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAAEaUlEQVRIid2VTWhUVxiGn5n7M/8592echs44MVHouDFSdCYpJJoq9N+iYKsQFy5cRLPJpha6aQstbmrTgghRurAISirOJl27a1MEcTEDQm0hEWlkMpOZy0wYc3NPF5lYnSSNla584cC9577f+57vO9+5B142KC8QswMwgcr/tYiAbdvj8Xj8RyABoOv6h+l0eiGdTlcDgcAHLZ4PeA9448VcAoHTJ0+eXDx37pybSCSuANi2feHy5cvexMSEZ9v2BQDLsj4fGhpyMplMFXh7U+FwOPx+KpW6GQwG9wEoinK8r6+vdujQoYZlWedbtB4hxJwQ4i+gG6Czs/OnixcveqOjo81AIDAGEAwG96dSqZvhcPjddp+OeDy+kM/npWEYZUBtleS8EOJ3QF8lJpPJn5PJ5NRTsV1CiLlYLPYLEAFUwzDK+Xxe2rZdAWIA/hZ5aXl52S0UClJK6QIeIIHfarVaD5BcVW02m7ubzebup4ycer1uOo7zHVAHPCmlWygUpOd5y4DbntVuTdOuhsPhP1oZARyzLGvZsqxvWu+xrVu3llOpVBmIAkQikU9CodAycKzFUcPh8J+apl0Fetdu0goygDRN86tVo1OnTtUNwygBGrDvyJEj84cPH54HBgG/aZoPh4eHG6tGpml+3arGa08L+3kW94UQ9WAweBroARBCyIMHD2qKorwTCoWyAwMDYmBgQIRCoSywf8+ePcHOzk6vFb89GAyOCCHqwP1/M1rSNK0yPj4uLMu6wUpDMDY21mHb9qemaR7IZrNKNptVTNM8kEgkPjt79qzZivXF4/Eb4+PjQtO0Mm17026Eruv3tm3b5uvv79+uKMowQH9/P4FAYGetVsvu2rWL3t5eHMfJaZr2+tDQEACKopzo6+vr6erq8um6fq9dd42R4zjThUJBXrp0KaZp2psAPp+P0dHRiGVZSjQaJRKJYBiGcubMmbDfvyKhadrQxMRErFgsylqt9mu7rq99Ajje1dV1xTAM+ejRI6XZbPp8vhXaqiiAlBIp5ZNnXdelbduu4zj+mZmZE8C1dbSfQa8QYmlqakoWi0XZaDTkZmg0GrJYLMqpqSnZ0dGxxDptra5jdFdV1SvXr18/OjIyEsvn8zx48ADP81hYWHiShd/vRwiBoigkk0m6u7uZnJx0VFW9Btx9ntIB+EOh0MNcLvdKLpcjnU6jqipCiCfl8zyParWK67rMzMwwPT3N9PT03OLi4qus/Fk2zQjAW1xc/DKTyXw7ODioz87OUqlUqFTWXkGGYTA4OEi1Wm3eunXri/VMYOOLT4tEIpNSSstxHHRdx7IsQqHQmlEul7l9+zZ37txRa7XazsePH3+/gea6ODo8PFzdtAvakMlkSkB6PcE15wggkUh8vHfv3tj8/Pxzr6xUKpHL5aLAW+t936gZdmzZsuUHYOvS0lKHqqqqz+cjGo16iqJIANd1ffV63S+lxHVdV9O0qpRytlQqfQTMPa/RRojxTwO5gPMf418i/A3wCMlBU3nSSgAAAABJRU5ErkJggg==);}
+            .cb > .R { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAAB8UlEQVRIie2Uz4rTUBSHf5lIid6QQBPQ0qo40IBQF9lMlVl32Qe4GwVfIbssOtJFmWfoQsgrlDxAN9M2sxfdqi1Bkvqv8YYU2usmM2ht02R04aLf6nLPvec7J5xc4MD/jpARewaAAIgBXKR7DQD30rUP4E26PgVwG8APAOMiBZQJIRGlNFAUJQJwAuBYluWQUhpQSgNZlkMAxwBOFEWJKKUBISQCUC4i0g3DCDnn3LKsb6Zp+qZp+u12+zNPabVaX672bdv+yjnnhmGEAPRtCXd9Ol3TtPe9Xu9Okeps22bz+fwhgHAzdmvHnUUcxwvXdcVms8nzSCaTiRDH8XcAi23xXaKEMVYfjUYeIeS+ruvrLEkQBEfj8fgjY6wJIMlT2CYvLMtifA+WZTEAz7MSHe0RJYIgZHYDAOmZ5d+I/hkH0Y3ZNd5XEM/zSv1+P/OQ53klAIV+7t/QNO3Sdd31vvEeDAZrTdMus3LtfL0lSToTRfGsVCrlKmq5XIJz/oox1i3Ujaqq547j7GvmGsdxuKqq50U6uqvr+uvVavW4Vqs9qFQqud463/eF6XT6QRTFt2EYvgTw6df4tmGoNxqN006no85mszyOa6rV6qNut1seDof1TdG2jp4QQi4kSVoVsqQkSSJEUfQUwLub3D/wBz8ByoAYDDTKlMQAAAAASUVORK5CYII=);}
+            .cb > .B { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAAC0UlEQVRIie2VPUgbYRjH//eRb9PWy4UcQoqJtZZScHIpCFqEUkpwCR0cHGymfoC6dGj3w6VDRJFasJN06FBwKhhx0Mm1g8EmQ8GYaMzXwV1yyd3TodUaP5Im1qX0B7e8z/95/u/z8L73Av8aXBs5dwGIALJXZuTz+d50dXW9FwThKcdxrKqqG63k/zEejydVKBQol8uRx+PZbSWXb0XMsuzm5ORkyDRNsCy7eVVGdwB4YrFYjYjAsqwHQB+AeCuGDXE4HE8kScqtra2Z9IvV1VVTkqScw+EI/xUTnudHent7C3t7e0REtL29TfF4nIiIUqkU9fT0FHief3BZH4sgCKmdnR0iItI0jWRZJlmWSdO0Y2NBEHbR3lU55mE4HC4cjSsSiZDf7ye/30+RSORomUZHR/MARtp2sdvtrxcWFugk0WiUotFo3drc3BxZrdZXjWo1PHUMw1QVRamd1I2Pj5/RFYvFKhGV220IAPqCwWC+XC7TRWiaRt3d3XkAtxoVanaP4sVicb6/v/9FKBS6JopiXfDg4AArKyvFUqn0FsC3yxjh8PDwna7rzxiGoc7OTuZkLJvNUjqdNkul0odmdZoiiuLHmZkZI5FI0HmfLMuGIAjLzeowzQROpzM/MDBww2KxnBuvVqvY2toqqKra2UYfv/F6vRvT09PlZDJ55iAkEgmamprSvF5v0+eiaUcA7G63+6Xb7R4rl8sB0zSdAMCyrGq325OKoiwrijILoNKKkc3lcr3o6Oh4DOCmrutH42BdLhcCgQBNTExcJyIsLS2VkskkVFUFABMArFZrHsD3fD4/r+v6pwuNRFGMDQ4O3h8eHrbzPA+Oq/99VSoVY319XQGAoaEht81mqxMYhoFarYbFxUUtk8l83t/fHzvXSJKkWSJ6BCBpGMbXbDabOdWxgp/vDwPgNgD3qY36OI67ByDIMMyXdDr9/OwQ/9MiPwDwFJqSSlo93AAAAABJRU5ErkJggg==);}
+            .cb > .N { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAACzUlEQVRIie2VzUsbURTFz5iv0YyZJI9MZsZQdFFcGEEbrBSKoBS6kNpaJHbbLnRjEXciSME/wpCN4EJaxBRpF7FdZlFQEEKw1BKoEMpQbdLJQGiqTbzdZBHzrW13ntV79z7u79w7vDfAtf6TBACusr0C4NY/pzDG3gI4B9APQGGMaVarNQ/AdNlabY2SZrPZWFpa4gAkTCbTl1Ao5PX7/QVRFEMAggDcV/BfLUEQwuFwuJhMJikejxMR0fHxcXpjY4Pm5+dziqL88Hq9bwDc+BtOv8/n0/f39+n09JRqqVgsUiQSOZckKdPR0fHwKhCOMfZ5fX2dANDu7m4lI1++0TSNent7MxaL5falKDzPPwsGg8bi4iLZbLZaHemVgaOjI1IU5SsAR6scgTF2omkapdNpOjs7qxrZzMxMMRaLVcVXV1d/SZK00hLF6XSuLC8v/6z5UYgom81Sd3d3UdermqJ8Pk8+n08DYGvGERljGcMwakIKhQKNjo7qsizn6hmZnZ01ADyoLHzhHjkcjucLCwt2h6N6zLlcDmNjY0Y8Hn/lcrny9ZyOj487vF7vo4YgnuefCoJg6+vru3Do8PAQg4OD2UQi8ULX9deBQKDuyzAyMgIiulcvDwBwu92ZVCpF0WiUDg4OiIhoc3OzwBj7BuAuAKiq+nJnZ+e83uiIiDwej17ZxAWpqvohGo3S2toaAaCtra3fjLGPADylI4GBgYGTRhAiIr/f/x1AV6OmemRZjnEcVwRAjLEUAFbK3VRVVUsmk804NDExkQZwp+H4SuIA3C+D+CRJ0vb29ppCiIjm5uYMAI/LC5rrgAjAu9K6TZbl99vb2/LQ0FArJmGxWDgAfHms4W8CAOx2+5Pp6emu4eFhriUKAJPJZK2MNQWJojg1OTnZ8vsFAJ2dnVQZa+qyvb39ExH12O32upe0UplMxglgCkDkMgavVVN/AO1fOCgNCnWuAAAAAElFTkSuQmCC);}
+            .cb > .P { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAAB60lEQVRIie2VQYvaQBTH/5s0Flw1ZiapwYPorUWoDQg9eC/US5GAZ0/7FTwWhEW82Wu/glfx0oOHQqH4AVwKIhSlQom7lTaaTc3robBIa3CUFFro7/jezPvNPN4wwH/+duQj1ysAHgP4DsCN/jg/sRhji0qlssxkMl84550/YuGcfxiNRkRE5HkelUolB8BT0f2S4DoZwINyuQwAiMViqNfrKUmSylGLtr7vu+Px+C7Q7/e/BkEwiVSkadqlZVlxwzAAAESERqNxrqrqawCqqOwQ+Vwud71er+lXOp3OLWPsVSQWWZYvWq3W7W8WInIch3Rd/yhS52DrJEk6T6VSe99bIpFAEASxSES+77/r9Xo3+3KDwYAURXkvIhKCMfa22+1udts2mUzINM0lgKJIjYM3SiaTNQCPVqvV2WazuYvPZjOk02nJNM2XAO6fegkAgCzLzwuFws18Pt83C7TdbqnZbLqc8zcAzk71qLquf55Op3slu9RqtVU8Hr84yaJp2mW73d4ctBDRYrEgzvkCx/8GAOf8k+M4Ih4iIrJtewngWVi9sGHIZ7NZhTEmfDDbtjXDMF4cK3poWdZRbSgWi1AU5UlY/l5IXBsOh0q1Wr0WFbmuK3melwrLh40kB5AXlezwDcDVCfv+QX4AaEU/ZhKTcj8AAAAASUVORK5CYII=);}
+
+            .cTable {
+                margin: 1em 0;
+                background-color: #f8f9fa;
+                border: 1px solid #a2a9b1;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 90%;
+            }
+            .cTable tr th {
+                background-color: #eaecf0;
+                text-align: center;
+            }
+            .cTable tr th, .cTable tr td {
+                border: 1px solid #a2a9b1;
+                padding: 0.2em 0.4em;
+            }
+                        
+            .contentText ul {
+                margin: 0.3em 0 0 1.6em;
+                padding: 0;
+            }
+
+            div.tright, div.floatright, table.floatright {
+                clear: right;
+                float: right;
+            }
+
+            div.tleft {
+                float: left;
+            }
+
+            a {
+                text-decoration: none;
+                color: #0645ad;
+                background: none;
+            }
+
+                a:not( [href] ) {
+                    cursor: pointer;
+                }
+
+                a:visited {
+                    color: #0b0080;
+                }
+
+                a:active {
+                    color: #faa700;
+                }
+
+                a:hover, a:focus {
+                    text-decoration: underline;
+                }
+
+            #content a.external {
+                color: #36b;
+            }
+
+                #content a.external:visited {
+                    color: #636;
+                }
+
+                #content a.external:active {
+                    color: #b63;
+                }
+
+            img {
+                border: none;
+                vertical-align: middle;
+            }
+
+            hr {
+                height: 1px;
+                color: #aaa;
+                background-color: #aaa;
+                border: 0;
+                margin: .2em 0;
+            }
+
+            h2, h3 {
+                color: #000;
+                background: none;
+                font-weight: normal;
+                margin: 0;
+                overflow: hidden;
+                padding-top: .5em;
+                padding-bottom: .17em;
+                border-bottom: 1px solid #aaa;
+            }
+            
+            h2 {
+                font-family: "Linux Libertine",Georgia,Times,serif;
+                line-height: 1.3;
+                margin-bottom: 0.25em;
+                padding: 0;            
+            }
+
+            h2 {
+                font-size: 1.5em;
+                margin-top: 1em;
+            }
+            
+            h3 {
+                font-size: 1.2em;
+                border-bottom: none;
+                font-weight: bold;
+            }                
+
+            #content h3 {
+                line-height: 1.6;
+                margin-top: 0.3em;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            p {
+                margin: .4em 0 .5em 0;
+            }
+
+                p img {
+                    margin: 0;
+                }
+
+            ul {
+                list-style-type: square;
+                margin: .3em 0 0 1.6em;
+                padding: 0;
+            }
+
+            ol {
+                margin: .3em 0 0 3.2em;
+                padding: 0;
+                list-style-image: none;
+            }
+
+            li {
+                margin-bottom: .1em;
+            }
+
+            pre, code, tt, kbd, samp {
+                font-family: monospace,'Courier';
+            }
+
+            pre {
+                color: #000;
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 1em;
+                white-space: pre-wrap;
+                line-height: 1.3em;
+            }
+
+            table {
+                font-size: 100%;
+            }
+
+            div.thumb {
+                margin-bottom: .5em;
+                width: auto;
+                background-color: transparent;
+                position: relative;
+            }
+            #thumbbuttons {
+                position: absolute;
+                top: -20px;
+                line-height: 20px;
+                height: 20px;
+                width: 272px;
+            }
+            #thumbbuttons div {
+                display: inline-block;
+                text-align: center;
+                color: #cccccc;
+                cursor: default;
+                vertical-align: center;
+                line-height: 20px;
+                user-select: none;
+                -moz-user-select: -moz-none;
+            }
+            #thumbbuttons .on, #thumbbuttons .off {
+                width: 20px;
+                
+            }
+            #thumbbuttons .on:hover {
+                color: #000000;
+                cursor: pointer;
+            }
+
+            div.thumbinner {
+                border: 1px solid #ccc;
+                padding: 3px;
+                background-color: #f9f9f9;
+                font-size: 94%;
+                text-align: center;
+                overflow: hidden;
+            }
+
+            #thumbcaption {
+                border: none;
+                line-height: 1.4em;
+                padding: 3px;
+                font-size: 94%;
+                text-align: left;
+            }
+
+            div.tright {
+                margin: .5em 0 1.3em 1.4em;
+            }
+
+            div.tleft {
+                margin: .5em 1.4em 1.3em 0;
+            }
+
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                font-family: sans-serif;
+                font-size: 100%;
+                background-color: #f6f6f6;
+            }
+
+            #content {
+                margin-left: 10em;
+                padding: 1em;
+                border: 1px solid #a7d7f9;
+                border-right-width: 0;
+                margin-top: -1px;
+                background-color: #ffffff;
+                color: #252525;
+            }
+
+                #content p {
+                    line-height: inherit;
+                    margin: 0.5em 0;
+                }
+
+                #content #info {
+                    border-bottom: 1px solid #aaa;
+                }
+
+                #content #info #fen {
+                    float: right;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    font-size: 12px;
+                    line-height: 30px;
+                }
+                #content #info #headline {
+                    font-size: 1.8em;
+                    margin-top: .1em;
+                    margin-bottom: 0;
+                    line-height: 1.2em;
+                    padding-bottom: 0;
+                    background-color: #ffffff;
+                    display: inline-block;
+                    font-weight: normal;
+                    font-family: "Linux Libertine",Georgia,Times,serif;
+                }
+            ul {
+                list-style-type: disc;
+                list-style-image: url(data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%225%22%20height%3D%2213%22%3E%0A%3Ccircle%20cx%3D%222.5%22%20cy%3D%229.5%22%20r%3D%222.5%22%20fill%3D%22%2300528c%22%2F%3E%0A%3C%2Fsvg%3E%0A);
+            }
+
+            #bodyContent, #bodyContentGlobal, #bodyContentTable, #bodyContentGraph {
+                position: relative;
+                line-height: 1.6;
+                font-size: 0.875em;
+                z-index: 0;
+                margin-top: 1.175em;
+            }
+
+            #links {
+                position: absolute;
+                top: 0.33em;
+                right: 0.75em;
+                z-index: 100;
+            }
+
+                #links ul {
+                    list-style-type: none;
+                    list-style-image: none;
+                    margin: 0;
+                    padding-left: 10em;
+                }
+
+                #links li {
+                    line-height: 1.125em;
+                    float: left;
+                    margin-left: 0.75em;
+                    margin-top: 0.5em;
+                    font-size: 0.75em;
+                    white-space: nowrap;
+                }
+
+            #searchWrapper {
+                float: left;
+                margin-right: 0.5em;
+                margin-left: 0.5em;
+            }
+
+                #searchWrapper form, #searchWrapper input {
+                    margin: 0;
+                    margin-top: 0.65em;
+                }
+
+            #simpleSearch {
+                display: block;
+                width: 12.6em;
+                width: 20vw;
+                min-width: 5em;
+                max-width: 20em;
+                padding-right: 1.4em;
+                height: 1.4em;
+                margin-top: 0.65em;
+                position: relative;
+                min-height: 1px;
+                border: solid 1px #aaa;
+                color: black;
+                background-color: white;
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAQCAIAAABY/YLgAAAAJUlEQVQIHQXBsQEAAAjDoND/73UWdnerhmHVsDQZJrNWVg3Dqge6bgMe6bejNAAAAABJRU5ErkJggg==);
+                background-position: top left;
+                background-repeat: repeat-x;
+            }
+
+                #simpleSearch input {
+                    margin: 0;
+                    padding: 0;
+                    border: 0;
+                    background-color: transparent;
+                    color: black;
+                }
+
+                #simpleSearch #searchInput {
+                    width: 100%;
+                    padding: 0.2em 0 0.2em 0.2em;
+                    font-size: 13px;
+                    -webkit-appearance: textfield;
+                }
+
+                    #simpleSearch #searchInput:focus {
+                        outline: none;
+                    }
+
+                    #simpleSearch #searchInput.placeholder {
+                        color: #999;
+                    }
+
+                    #simpleSearch #searchInput:-ms-input-placeholder {
+                        color: #999;
+                    }
+
+                    #simpleSearch #searchInput:-moz-placeholder {
+                        color: #999;
+                    }
+
+                    #simpleSearch #searchInput::-webkit-search-decoration, #simpleSearch #searchInput::-webkit-search-cancel-button, #simpleSearch #searchInput::-webkit-search-results-button, #simpleSearch #searchInput::-webkit-search-results-decoration {
+                        -webkit-appearance: textfield;
+                    }
+
+                #simpleSearch #searchButton {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 1.65em;
+                    height: 100%;
+                    cursor: pointer;
+                    text-indent: -99999px;
+                    line-height: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                }
+
+                #simpleSearch #searchButton {
+                    background-image: linear-gradient(transparent,transparent),url(data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2213%22%3E%3Cg%20stroke-width%3D%222%22%20stroke%3D%22%236c6c6c%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M11.29%2011.71l-4-4%22%2F%3E%3Ccircle%20cx%3D%225%22%20cy%3D%225%22%20r%3D%224%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+                    background-position: center center;
+                    background-repeat: no-repeat;
+                }
+
+            div.tabs {
+                float: left;
+                height: 2.5em;
+                background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAuCAIAAABmjeQ9AAAAQ0lEQVR4AWVOhQEAIAzC/X+xAXbXeoDFGA3A9yk1n4juBROcUegfarWjP3ojZvEzxs6j+nygmo+zzsk79nY+tOxdEhlf3UHVgUFrVwAAAABJRU5ErkJggg==);
+                background-position: bottom left;
+                background-repeat: no-repeat;
+                padding-left: 1px;
+            }
+
+                div.tabs ul {
+                    float: left;
+                    height: 100%;
+                    list-style-type: none;
+                    list-style-image: none;
+                    margin: 0;
+                    padding: 0;
+                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAuCAIAAABmjeQ9AAAAQ0lEQVR4AWVOhQEAIAzC/X+xAXbXeoDFGA3A9yk1n4juBROcUegfarWjP3ojZvEzxs6j+nygmo+zzsk79nY+tOxdEhlf3UHVgUFrVwAAAABJRU5ErkJggg==);
+                    background-position: right bottom;
+                    background-repeat: no-repeat;
+                }
+
+                    div.tabs ul li {
+                        float: left;
+                        line-height: 1.125em;
+                        display: inline-block;
+                        height: 100%;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f3f3f3;
+                        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAABkCAIAAADITs03AAAAO0lEQVR4AeSKhREAMQzDdN5/5uixuEKDpqgBjl2f78wd2DVj1+26/h///PfteVMN7zoGebcg1/Y/ZQQAlAUtQCujIJMAAAAASUVORK5CYII=);
+                        background-position: bottom left;
+                        background-repeat: repeat-x;
+                        white-space: nowrap;
+                    }
+
+                    div.tabs ul > li {
+                        display: block;
+                    }
+
+                div.tabs li {
+                }
+
+                    div.tabs li.selected {
+                        background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAABkAQAAAABvV2fNAAAADElEQVR4AWNoGB4QAInlMgFKeRKBAAAAAElFTkSuQmCC);
+                    }
+
+                        div.tabs li.selected a, div.tabs li.selected a:visited {
+                            color: #333;
+                            text-decoration: none;
+                        }
+
+                    div.tabs li a {
+                        display: inline-block;
+                        height: 1.9em;
+                        padding-left: 0.5em;
+                        padding-right: 0.5em;
+                        color: #0645ad;
+                        cursor: pointer;
+                        font-size: 0.8em;
+                    }
+
+                div.tabs span {
+                    display: inline-block;
+                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAuCAIAAABmjeQ9AAAAQ0lEQVR4AWVOhQEAIAzC/X+xAXbXeoDFGA3A9yk1n4juBROcUegfarWjP3ojZvEzxs6j+nygmo+zzsk79nY+tOxdEhlf3UHVgUFrVwAAAABJRU5ErkJggg==);
+                    background-position: bottom right;
+                    background-repeat: no-repeat;
+                }
+
+                    div.tabs span a {
+                        display: inline-block;
+                        padding-top: 1.25em;
+                    }
+
+                    div.tabs span > a {
+                        float: left;
+                        display: block;
+                    }
+
+            #header {
+                height: 5em;
+                background-position: bottom left;
+                background-repeat: repeat-x;
+                background-color: #f6f6f6;
+                background-image: -webkit-gradient(linear,left top,left bottom,color-stop(50%,#ffffff),color-stop(100%,#f6f6f6));
+                background-image: -webkit-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+                background-image: -moz-linear-gradient(top,#ffffff 50%,#f6f6f6 100%);
+                background-image: linear-gradient(#ffffff 50%,#f6f6f6 100%);
+                background-color: #ffffff;
+            }
+
+            div#head {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 100%;
+            }
+
+            #leftNav {
+                float: left;
+                margin-left: 10em;
+                margin-top: 2.5em;
+                margin-bottom: -2.5em;
+                display: inline;
+            }
+
+            #rightNav {
+                float: right;
+                margin-top: 2.5em;
+            }
+
+            #logo {
+                position: absolute;
+                top: -160px;
+                left: 0;
+                width: 10em;
+                height: 160px;
+            }
+
+                #logo a {
+                    display: block;
+                    width: 10em;
+                    height: 160px;
+                    background-repeat: no-repeat;
+                    background-position: center center;
+                    text-decoration: none;
+                    background-image: url('data:image/png;base64,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');
+                }
+
+            div#leftmenu {
+                font-size: inherit;
+                position: absolute;
+                top: 160px;
+                padding-top: 1em;
+                width: 10em;
+                left: 0;
+            }
+
+                div#leftmenu div.group {
+                    margin: 0 0.6em 0 0.7em;
+                    padding: 0.25em 0;
+                    background-position: top left;
+                    background-repeat: no-repeat;
+                    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAAABCAAAAAAphRnkAAAAJ0lEQVQIW7XFsQEAIAyAMPD/b7uLWz8wS5youFW1UREfiIpH1Q2VBz7fGPS1dOGeAAAAAElFTkSuQmCC);
+                }
+
+                    div#leftmenu div.group h3 {
+                        font-size: 0.75em;
+                        color: #4d4d4d;
+                        font-weight: normal;
+                        margin: 0;
+                        padding: 0.25em 0 0.25em 0.25em;
+                        cursor: default;
+                        border: none;
+                    }
+
+                    div#leftmenu div.group div.body {
+                        margin: 0 0 0 1.25em;
+                        padding-top: 0;
+                    }
+
+                        div#leftmenu div.group div.body ul {
+                            list-style-type: none;
+                            list-style-image: none;
+                            margin: 0;
+                            padding: 0;
+                        }
+
+                            div#leftmenu div.group div.body ul li {
+                                line-height: 1.125em;
+                                margin: 0;
+                                padding: 0.25em 0;
+                                font-size: 0.75em;
+                                word-wrap: break-word;
+                            }
+
+                                div#leftmenu div.group div.body ul li a {
+                                    color: #0645ad;
+                                }
+
+                                    div#leftmenu div.group div.body ul li a:visited {
+                                        color: #0b0080;
+                                    }
+
+                div#leftmenu #logo + div.group {
+                    background-image: none;
+                    margin-top: 0;
+                }
+
+                    div#leftmenu #logo + div.group div.body {
+                        margin-left: 0.5em;
+                    }
+
+            div#footer {
+                margin-left: 10em;
+                margin-top: 0;
+                padding: 0.75em;
+                line-height: 1.4em;
+            }
+
+                div#footer ul {
+                    list-style-type: none;
+                    list-style-image: none;
+                    margin: 0;
+                    padding: 0;
+                }
+
+                    div#footer ul li {
+                        margin: 0;
+                        padding: 0;
+                        padding-top: 0.5em;
+                        padding-bottom: 0.5em;
+                        color: #333;
+                        font-size: 0.7em;
+                    }
+
+            #content .external {
+                background-position: center right;
+                background-repeat: no-repeat;
+                background-image: linear-gradient(transparent,transparent),url(data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%2212%22%3E%3Cpath%20fill%3D%22%23fff%22%20stroke%3D%22%2306c%22%20d%3D%22M1.5%204.518h5.982V10.5H1.5z%22%2F%3E%3Cpath%20d%3D%22M5.765%201H11v5.39L9.427%207.937l-1.31-1.31L5.393%209.35l-2.69-2.688%202.81-2.808L4.2%202.544z%22%20fill%3D%22%2306f%22%2F%3E%3Cpath%20d%3D%22M9.995%202.004l.022%204.885L8.2%205.07%205.32%207.95%204.09%206.723l2.882-2.88-1.85-1.852z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E);
+                padding-right: 13px;
+            }
+        }
+
+        @media screen and (min-width:982px) {
+            #content {
+                margin-left: 11em;
+                padding: 1.25em 1.5em 1.5em 1.5em;
+            }
+
+            #logo {
+                left: 0.5em;
+            }
+
+            div#footer {
+                margin-left: 11em;
+                padding: 1.25em;
+            }
+
+            #leftmenu {
+                padding-left: 0.5em;
+            }
+
+            #searchWrapper {
+                margin-right: 1em;
+            }
+
+            #leftNav {
+                margin-left: 11em;
+            }
+
+            #links {
+                right: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+    <div id="content">
+        <div id="info" style="">
+            <h1 id="headline" style=""></h1>
+            <div id="fen">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</div>
+        </div>
+        <div id="bodyContent" style="">
+            <div id="thumb" class="thumb tright" style="">
+                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);">◁</div><div id="buttonforward" class="off" onclick="historymove(+1,event);">▷</div></div>
+                <div class="thumbinner">
+                <table class="cbTable" cellspacing="0" cellpadding="0">
+                <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                <tr><td>8</td><td colspan="8" rowspan="8" class="cbCell"><div id="chessboard1" class="cb"></div></td><td>8</td></tr>
+                <tr><td>7</td><td>7</td></tr><tr><td>6</td><td>6</td></tr><tr><td>5</td><td>5</td></tr><tr><td>4</td><td>4</td></tr>
+                <tr><td>3</td><td>3</td></tr><tr><td>2</td><td>2</td></tr><tr><td>1</td><td>1</td></tr>
+                <tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                </tbody></table>
+                <div id="thumbcaption"></div>
+                </div>
+                </div><div class="contentText">
+                
+                <p id="text"></p>
+                <h2><span>Code</span></h2>
+                <p>This shows a javascript implementation of this evaluation term <span id="codeTermName"></span>.</p>
+                <pre id="code"></pre><ul><li id="childlist">This function calls following evaluation subterms: <a onclick="golink('Middle game evaluation');">Middle game evaluation</a>, <a onclick="golink('End game evaluation');">End game evaluation</a>, <a onclick="golink('Phase');">Phase</a>, <a onclick="golink('Tempo');">Tempo</a>, <a onclick="golink('Scale factor');">Scale factor</a></li><li id="parentlist">It is used in no parent evaluation terms.</li></ul>
+                <h2 id="persquaretitle" style="display: none;">Per square values</h2>
+                <div id="thumb2" class="thumb tleft" style="display: none;">
+                <div class="thumbinner">
+                <table class="cbTable" cellspacing="0" cellpadding="0">
+                <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                <tr><td>8</td><td colspan="8" rowspan="8" class="cbCell"><div id="chessboard2" class="cb"></div></td><td>8</td></tr>
+                <tr><td>7</td><td>7</td></tr><tr><td>6</td><td>6</td></tr><tr><td>5</td><td>5</td></tr><tr><td>4</td><td>4</td></tr>
+                <tr><td>3</td><td>3</td></tr><tr><td>2</td><td>2</td></tr><tr><td>1</td><td>1</td></tr>
+                <tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                </tbody></table>
+                <div id="thumbcaption2"></div>
+                </div>
+                </div>
+                <div id="thumb3" class="thumb tleft" style="display: none;">
+                <div class="thumbinner">
+                <table class="cbTable" cellspacing="0" cellpadding="0">
+                <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                <tr><td>8</td><td colspan="8" rowspan="8" class="cbCell"><div id="chessboard3" class="cb"></div></td><td>8</td></tr>
+                <tr><td>7</td><td>7</td></tr><tr><td>6</td><td>6</td></tr><tr><td>5</td><td>5</td></tr><tr><td>4</td><td>4</td></tr>
+                <tr><td>3</td><td>3</td></tr><tr><td>2</td><td>2</td></tr><tr><td>1</td><td>1</td></tr>
+                <tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                </tbody></table>
+                <div id="thumbcaption3"></div>
+                </div>
+                </div>
+                <div style="clear:both;"></div>
+                <h2 id="seealsotitle" style="">See also</h2><ul id="seealso"></ul>
+                <div style="clear:both;"></div>
+                <h2 id="extlinkstitle" style="">External links</h2><ul id="extlinks"></ul>
+            </div>
+        </div>
+        <div id="bodyContentEdit" style="display: none;">
+            Name<br>
+            <input id="editName" style="width:100%;" type="text">
+            Group<br>
+            <input id="editGroup" style="width:100%;" type="text">
+            Text<br>
+            <textarea id="editText" style="width: 100%;" rows="5"></textarea><br>
+            Code<br>
+            <textarea id="editCode" style="width: 100%;" rows="10"></textarea><br>
+            External links<br>
+            <textarea id="editLinks" style="width: 100%;" rows="5"></textarea><br>
+            Options<br>
+            <label><input id="editEval" type="checkbox">Show evaluation</label>
+            <label><input id="editSquares" type="checkbox">Show per square values</label>
+            <label><input id="editSquaresZero" type="checkbox">Per square values show zero</label>
+            <label><input id="editHighlight" type="checkbox">Highlight squares</label>
+            <label><input id="editHighlightBlack" type="checkbox">Highlight squares for black</label>
+            <label><input id="editForwhite" type="checkbox">For white side</label>
+            <label><input id="editForGraph" type="checkbox">For graph</label>
+            <br><br>
+            <input value="Apply changes" onclick="apply();" type="button">
+            <input value="Duplicate this page" onclick="duplicate();" type="button">
+            <input value="Remove this page" onclick="remove();" type="button">
+            <input value="Apply changes + Move to end" onclick="movetoend();" type="button">
+        </div>
+        <div id="bodyContentGlobal" style="display: none;">
+            <div class="contentText">
+                <p><b>Position representation</b> and <b>global functions</b> used in evaluation terms.</p>
+                <h2><span>Code</span></h2>
+                <p>Position is represented with javascript object like this.</p>
+                <pre id="codeGlobalPos"></pre>
+                <p>Global functions board(), colorflip() and sum().</p>
+                <pre id="codeGlobalFunc"></pre>
+            </div>
+        </div>
+        <div id="bodyContentTable" style="display: none;">
+            <div class="contentText">
+                <div id="evalTable"></div>
+            </div>
+        </div>        
+        <div id="bodyContentGraph" style="display: none;">
+            <div class="contentText">
+                <div id="graphData"></div>
+            </div>
+        </div>        
+    </div>
+    <div>
+        <div id="head">
+            <div id="links">
+                <ul>
+                    <li><a href="http://www.stockfishchess.com/" title="Home - Stockfish - Open Source Chess Engine">Homepage</a></li>
+                    <li><a href="https://github.com/official-stockfish/Stockfish" title="GitHub - official-stockfish/Stockfish: UCI chess engine">Source</a></li>
+                    <li><a href="http://tests.stockfishchess.org/tests" title="Stockfish Testing Framework">Fishtest</a></li>
+                    <li><a href="https://groups.google.com/forum/?fromgroups=#!forum/fishcooking" title="Forum">Fishcooking</a></li>
+                </ul>
+            </div>
+            <div id="leftNav">
+                <div class="tabs">
+                    <ul>
+                        <li id="liEval" class="selected"><span><a onclick="editmode(0);">Evaluation term</a></span></li>
+                        <li id="liGlobal" class=""><span><a onclick="editmode(2);">Global functions</a></span></li>
+                        <li id="liTable" class=""><span><a onclick="editmode(3);">Table</a></span></li>
+                        <li id="liGraph" class=""><span><a onclick="editmode(4);">Graph</a></span></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="rightNav">
+                <div class="tabs">
+                    <ul>
+                        <li id="liRead" class="selected"><span><a onclick="editmode(0);">Read</a></span></li>
+                        <li id="liEdit" class=""><span><a onclick="editmode(1);">Edit</a></span></li>
+                        <li><span><a onclick="save();" download="">Save</a></span></li>
+                    </ul>
+                </div>
+                <div id="searchWrapper">
+                    <form id="simpleSearch" onsubmit="dosearch();return false;">
+                        <input name="search" placeholder="Search or enter position FEN" id="searchInput" type="search"><input name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchButton" type="submit">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="leftmenu"></div>
+    </div>
+    <div id="footer"><ul><li> This page was last modified on <span id="date">25 January 2017</span>.</li></ul><div style="clear:both"></div></div>
+<script>
+
+function ctrlMessage(e, message) {
+  if (e == null) e = window.event;
+  if (e.ctrlKey) alert(message);
+}
+function refreshGraph(pos) {
+  var grouplist = [], midindex = null, endindex = null, maincode = null;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].name == "Middle game evaluation") midindex = i;
+    if (data[i].name == "End game evaluation") endindex = i;
+    if (data[i].name == "Main evaluation") maincode = data[i].code;
+  }
+  if (midindex == null || endindex == null || maincode == null) return;
+  var zero = function() {return 0;};
+  for (var i = 0; i < data.length; i++) {
+    var n = data[i].name.toLowerCase().replace(/ /g, "_");
+    while (i != midindex && i != endindex && maincode.indexOf("$" + n + "(") >= 0) {
+      maincode = maincode.replace("$" + n + "(", "(function(){return " + eval("$" + n + "(pos)")+ ";})(");
+    }
+    if (data[midindex].code.indexOf("$" + n + "(") < 0
+     && data[endindex].code.indexOf("$" + n + "(") < 0) continue;
+    var code = data[i].code, list = [];
+    for (var j = 0; j < data.length; j++) {
+      if (!data[j].graph || data[j].group != data[i].group || i == j) continue;
+      var n2 = data[j].name.toLowerCase().replace(/ /g, "_");
+      code = code.replace("$" + n2 + "(", "$g-" + n2 + "(").replace("$" + n2 + "(", "$g-" + n2 + "(");
+      list.push(n2);
+    }
+    if (data[i].graph) list.push(n);
+    for (var j = 0; j < list.length; j++) {
+      var n2 = list[j];
+      if (code.indexOf("$g-" + n2 + "(") < 0 && !data[i].graph) continue;
+      var mw = 0, mb = 0, ew = 0, eb = 0, func = null;
+      try {
+        eval("func = " + code.replace("$g-"+n2+"(","$"+n2+"(")
+                             .replace("$g-"+n2+"(","$"+n2+"(")
+                             .replace(/\$g\-[a-z_]+\(/g, "zero(") + ";");
+        if (data[midindex].code.indexOf("$" + n + "(pos") >= 0) mw = func(pos);
+        if (data[midindex].code.indexOf("$" + n + "(colorflip(pos)") >= 0) mb = func(colorflip(pos));
+        if (data[endindex].code.indexOf("$" + n + "(pos") >= 0) ew = func(pos);
+        if (data[endindex].code.indexOf("$" + n + "(colorflip(pos)") >= 0) eb = func(colorflip(pos));
+      }
+      catch (e) {
+        alert(e.message);
+        continue;
+      }   
+      var evals = [mw - mb, ew - eb];
+      var index = grouplist.map(function(e) { return e.elem; }).indexOf(n2);
+      if (index < 0) {
+        grouplist.push({group:data[i].group,elem:n2,item:evals});
+      } else {
+        grouplist[index].item[0] += evals[0];
+        grouplist[index].item[1] += evals[1];
+      }        
+    }
+
+  }
+  grouplist.sort(function(a,b) {return (a.group > b.group) ? 1 : ((b.group > a.group) ? -1 : 0);} );
+  maincode = maincode.replace("function $$(pos)","function $$(PMG,PEG)")
+                     .replace("$middle_game_evaluation(pos)","PMG")
+                     .replace("$end_game_evaluation(pos)","PEG")  
+  var mainfunc = eval("(" + maincode + ")");
+  for (var i = 0; i < grouplist.length; i++) {
+    grouplist[i].item.push(mainfunc(grouplist[i].item[0], grouplist[i].item[1]) - mainfunc(0, 0));
+  }
+  var pawn = 248, xscale = 2;
+  for (var i = 0; i < grouplist.length; i++) while (Math.abs(grouplist[i].item[2]) >= xscale * pawn) xscale++;
+  if (xscale > 10) while (xscale % 4 != 0) xscale++;
+  
+  grouplist.push({group:"Tempo",elem:"tempo",item:[mainfunc(0, 0),mainfunc(0, 0),mainfunc(0, 0)]});
+  var total = 0;
+  for (var i = 0; i < grouplist.length; i++) total += grouplist[i].item[2];
+  var gData = "<div class=\"graph\" onclick=\"ctrlMessage(event,'TOTAL="+(total)+"');\">";
+  gData += "<div class=\"background\"></div><div class=\"line0\"></div>";
+  for (var i = 1; i < xscale + 1; i++) {
+    if (xscale > 10 && i % 4 != 0) continue;
+    if (i < xscale) {
+      gData += "<div class=\"line1\" style=\"right:" + (258 + (243 / xscale) * i) + "px\"></div>";
+      gData += "<div class=\"line1\" style=\"right:" + (258 - (243 / xscale) * i) + "px\"></div>";
+    }
+    gData += "<div class=\"xlabel\" style=\"right:" + (248 + (243 / xscale) * i) + "px\">"+(-i)+"P</div>";
+    gData += "<div class=\"xlabel\" style=\"right:" + (248 - (243 / xscale) * i) + "px\">"+(i)+"P</div>";
+  }
+  gData += "<div class=\"xlabel\" style=\"right:" + (248) + "px\">0P</div>";
+  var colorlist = [[0,173,220],[240,240,22],[234,21,122],
+                   [127,209,59],[22,240,240],[254,184,10]], colorindex = 0;
+  for (var i = 0; i < grouplist.length; i++) {
+    if (i > 0 && grouplist[i-1].group != grouplist[i].group) colorindex = (colorindex + 1) % 6;
+    gData += "<div class=\"label\" onclick=\"golink(this)\">";
+    gData += grouplist[i].elem[0].toUpperCase()+grouplist[i].elem.replace(/\_/g," ").substring(1);
+    gData += "</div>";
+    var v = 243 * grouplist[i].item[2] / xscale / pawn;
+    var color = "background: linear-gradient(rgb("+(colorlist[colorindex][0])+", "
+                                                  +(colorlist[colorindex][1])+", "
+                                                  +(colorlist[colorindex][2])+"), rgb("
+                                                  +(colorlist[colorindex][0]*0.75 << 0)+", "
+                                                  +(colorlist[colorindex][1]*0.8 << 0)+", "
+                                                  +(colorlist[colorindex][2]*0.9 << 0)+"));";
+    if (v != 0) {
+      var r, w;
+      if (v > 0) { r = 258-v; w = v; }
+            else { r = 258; w = -v; }
+      var title = "MG=" + grouplist[i].item[0] + "\nEG=" + grouplist[i].item[1] + "\nTOTAL=" +  grouplist[i].item[2];
+      gData += "<div class=\"bar\" style=\"right:"+(r)+"px;top:"+(16+i*17)+"px;width:" + (w) + "px;"+color+"\" title=\""+title+"\"></div>";
+    }
+  }
+  gData += "</div>";
+  document.getElementById('graphData').innerHTML = gData;
+  
+  
+}
+function refreshTable(pos) {
+  var grouplist = [], midindex = null, endindex = null;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].name == "Middle game evaluation") midindex = i;
+    if (data[i].name == "End game evaluation") endindex = i;
+  }
+  if (midindex == null || endindex == null) return;
+  for (var i = 0; i < data.length; i++) {
+    var n = data[i].name.toLowerCase().replace(/ /g, "_");
+    if (data[midindex].code.indexOf("$" + n + "(") < 0
+     && data[endindex].code.indexOf("$" + n + "(") < 0) continue;
+    var mw = 0, mb = 0, ew = 0, eb = 0, func = null;
+    try {
+      eval("func = $" + n + ";");
+      if (data[midindex].code.indexOf("$" + n + "(pos") >= 0) mw = func(pos);
+      if (data[midindex].code.indexOf("$" + n + "(colorflip(pos)") >= 0) mb = func(colorflip(pos));
+      if (data[endindex].code.indexOf("$" + n + "(pos") >= 0) ew = func(pos);
+      if (data[endindex].code.indexOf("$" + n + "(colorflip(pos)") >= 0) eb = func(colorflip(pos));
+    }
+    catch (e) {
+      continue;
+    }
+    var evals = [mw, ew, mb, eb, mw - mb, ew - eb];
+    var index = grouplist.map(function(e) { return e.group; }).indexOf(data[i].group);
+    if (index < 0) {
+      grouplist.push({group:data[i].group,item:evals});
+    } else {
+      for (var j = 0; j < grouplist[index].item.length; j++) {
+        grouplist[index].item[j] += evals[j];
+      }
+    }
+  }
+  grouplist.sort(function(a,b) {return (a.group > b.group) ? 1 : ((b.group > a.group) ? -1 : 0);} );
+  var evaltable = "<table class='cTable'>";
+  evaltable += "<tr><th rowspan='2'>Group</th><th colspan='2'>White</th><th colspan='2'>Black</th><th colspan='2'>Total</th></tr>";
+  evaltable += "<tr><th>Middle Game</th><th>End Game</th><th>Middle Game</th><th>End Game</th><th>Middle Game</th><th>End Game</th></tr>";
+  var grouplistsum = [0, 0, 0, 0, 0, 0];
+  for (var i = 0; i < grouplist.length; i++) {
+    evaltable += "<tr><td>" + grouplist[i].group + "</td>";
+    for (var j = 0; j < grouplist[i].item.length; j++) {
+      evaltable += "<td>" + grouplist[i].item[j] + "</td>";
+      grouplistsum[j] += grouplist[i].item[j];
+    }
+    evaltable += "</tr>";
+  }
+  evaltable += "<tr><th>Total</th>";
+  for (var j = 0; j < grouplistsum.length; j++) evaltable += "<th>" + grouplistsum[j] + "</th>";
+  evaltable += "</tr>";
+  evaltable += "</table>";
+  document.getElementById('evalTable').innerHTML = evaltable;
+}
+
+function dosearch() {
+  var text = document.getElementById('searchInput').value;
+  document.getElementById('searchInput').value = "";
+  if (text.split("/").length == 8 && text.split(".").length == 1) {
+    document.getElementById('fen').innerHTML = text;
+    _history = [document.getElementById('fen').innerHTML]; _historyindex = 0;
+    historymove(0);
+  } else if (text.split(".").length > 1) {
+      text = " " + text.replace(/(\[FEN [^\]]+\])+?/g, function ($0, $1) { return $1.replace(/\[|\]|"/g,"").replace(/\s/g,"."); });
+      text = text.replace(/\[Event /g, "* [Event ").replace(/\s(\[[^\]]+\])+?/g, "").replace(/(\{[^\}]+\})+?/g, "");
+      var r = /(\([^\(\)]+\))+?/g; while (r.test(text)) text = text.replace(r, "");
+      text = text.replace(/\s\d+\.+/g, " ").replace(/\.\.\./g, "")
+                 .replace(/\$\d+/g, "").replace(/0-0-0/g, "O-O-O").replace(/0-0/g, "O-O").replace(/\?/g,"");
+      var moves = text.replace(/\s/g, " ").replace(/  +/g, " ").trim().split(' ');
+      var init = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      var pos = parseFEN(init);
+      _history = [init]; _historyindex = 0;
+      for (var i = 0; i < moves.length; i++) {
+        if ("*01".indexOf(moves[i][0]) >= 0) {
+          if (i < moves.length - 1) {
+            pos = parseFEN(init);
+            historyadd(generateFEN(pos));
+          }
+          continue;
+        } else if (moves[i].indexOf("FEN.") == 0) {
+          pos = parseFEN(moves[i].substring(4).replace(/\./g, " "));
+          if (_history[_historyindex] == init) _historyindex--;
+          historyadd(generateFEN(pos));
+          continue;
+        }
+        if (moves[i] == "--") { pos.w = !pos.w; historyadd(generateFEN(pos)); continue; }
+        var move = parseMove(pos, moves[i]);
+        if (move == null) { alert("incorrect move: "+moves[i]); break; }
+        pos = doMove(pos, move.from, move.to, move.p);
+        historyadd(generateFEN(pos));
+      }
+      document.getElementById('fen').innerHTML = generateFEN(pos);
+      historymove(0);
+  } else if (text.toLowerCase() == "reset") {
+    document.getElementById('fen').innerHTML = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    _history = [document.getElementById('fen').innerHTML]; _historyindex = 0;
+    historymove(0);
+  } else if (text.toLowerCase() == "colorflip") {
+    document.getElementById('fen').innerHTML = generateFEN(colorflip(parseFEN(document.getElementById('fen').innerHTML)));
+    showBoard();
+  } else if (text.toLowerCase() == "sidetomove") {
+    document.getElementById('fen').innerHTML = document.getElementById('fen').innerHTML.replace(" w ", " ! ").replace(" b ", " w ").replace(" ! ", " b ");
+    showBoard();
+  } else {
+    editmode(0);
+    showPage(text.toLowerCase().replace(/ /g, "_"), true);
+  }
+}
+function editmode(edit) {
+  document.getElementById('liRead').className = edit != 1 ? "selected" : "";
+  document.getElementById('liEdit').className = edit == 1 ? "selected" : "";
+  document.getElementById('liEval').className = edit < 2 ? "selected" : "";
+  document.getElementById('liGlobal').className = edit == 2 ? "selected" : "";
+  document.getElementById('liTable').className = edit == 3 ? "selected" : "";
+  document.getElementById('liGraph').className = edit == 4 ? "selected" : "";
+  
+  document.getElementById('info').style.display = edit != 1 ? "" : "none";
+  document.getElementById('bodyContent').style.display = edit == 0 ? "" : "none";
+  document.getElementById('bodyContentEdit').style.display = edit == 1 ? "" : "none";
+  document.getElementById('bodyContentGlobal').style.display = edit == 2 ? "" : "none";
+  document.getElementById('bodyContentTable').style.display = edit == 3 ? "" : "none";
+  document.getElementById('bodyContentGraph').style.display = edit == 4 ? "" : "none";
+  if (edit == 1) {
+    document.getElementById('editName').value = data[curindex].name;
+    document.getElementById('editGroup').value = data[curindex].group;
+    document.getElementById('editText').value = data[curindex].text;
+    document.getElementById('editCode').value = data[curindex].code;
+    document.getElementById('editLinks').value = data[curindex].links.join("\n");
+    document.getElementById('editEval').checked = data[curindex].eval;
+    document.getElementById('editSquares').checked = data[curindex].squares > 0;
+    document.getElementById('editSquaresZero').checked = data[curindex].squares > 1;
+    document.getElementById('editHighlight').checked = data[curindex].highlight > 0;
+    document.getElementById('editForwhite').checked = data[curindex].forwhite;
+    document.getElementById('editForGraph').checked = data[curindex].graph;
+    document.getElementById('editHighlightBlack').checked = data[curindex].highlight > 1;
+  }
+  document.getElementById('headline').innerHTML = edit == 2 ? "Global functions" :
+                                                  edit == 3 ? "Table" :
+                                                  edit == 4 ? "Graph" : data[curindex].name ;
+  if (edit == 2) {
+    var pos = parseFEN(document.getElementById('fen').innerHTML);
+    var s = "pos = {// chessboard\n       b: [" + JSON.stringify(pos.b[0]);
+    for (var i = 1; i < 8; i++) s += ",\n           " + JSON.stringify(pos.b[i]);
+    s += "],\n\n       // castling rights\n       c: " + JSON.stringify(pos.c) + "\n\n       // enpassant\n";
+    s += "       e: " + JSON.stringify(pos.e) + "\n\n       // side to move\n"
+    s += "       w: " + JSON.stringify(pos.w) + "       m: " + JSON.stringify(pos.m) + "}\n";
+    document.getElementById('codeGlobalPos').innerHTML = s;
+    document.getElementById('codeGlobalFunc').innerHTML = board + "\n" + colorflip + "\n" + sum;
+  }
+  var targetContent = edit == 3 ? 'bodyContentTable' :
+                      edit == 4 ? 'bodyContentGraph' : 'bodyContent';
+  var t = document.getElementById('thumb'), p = document.getElementById(targetContent);
+  p.insertBefore(t, p.children[0]);
+  if (edit == 0 || edit == 3 || edit == 4) showBoard();
+}
+
+function apply() {
+  var d = new Date();
+  var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  document.getElementById("date").innerHTML = d.getDate() + " " + monthNames[d.getMonth()] + " " + d.getFullYear();
+  var name = document.getElementById('editName').value;
+  if (name.length > 0) name = name[0].toUpperCase() + name.replace(/_/g, " ").substring(1).toLowerCase();
+  data[curindex].name = name;
+  data[curindex].group = document.getElementById('editGroup').value;
+  data[curindex].text = document.getElementById('editText').value;
+  data[curindex].code = document.getElementById('editCode').value;
+  
+  var links = document.getElementById('editLinks').value;
+  if (links.length == 0) links = []; else links = links.split("\n");
+  for (var i = 0; i < links.length; i++) links[i] = links[i].split(",");
+  data[curindex].links = links;
+  data[curindex].eval = document.getElementById('editEval').checked;
+  data[curindex].squares = document.getElementById('editSquares').checked ?
+                            (document.getElementById('editSquaresZero').checked ? 2 : 1) : 0;
+  data[curindex].highlight = document.getElementById('editHighlight').checked ?
+                            (document.getElementById('editHighlightBlack').checked ? 2 : 1) : 0;
+  data[curindex].forwhite = document.getElementById('editForwhite').checked;
+  data[curindex].graph = document.getElementById('editForGraph').checked;
+  
+  if (doEval()) editmode(0);
+  showMenu();
+  updatePage();
+}
+
+function duplicate() {
+  if (confirm('Are you sure you want to duplicate this page?')) {
+    data.push({});
+    curindex = data.length - 1;
+    apply();
+  }  
+}
+
+function remove() {
+  if (confirm('Are you sure you want to remove this page?')) {
+    data.splice(curindex, 1);
+    curindex = 0;
+    editmode(0);
+    showMenu();
+    updatePage();
+  }  
+}
+
+function movetoend() {
+  var i = curindex;
+  data.push({});
+  curindex = data.length - 1;
+  apply();
+  data.splice(i, 1);
+  curindex = data.length - 1;
+  editmode(0);
+  showMenu();
+  updatePage();
+}
+
+function doEval() {
+  try {
+    for (var i = 0; i < data.length; i++) {
+        eval("$" + data[i].name.toLowerCase().replace(/ /g, "_") + " = " + data[i].code + ";");
+    }
+  }
+  catch (e) {
+    alert("error in code: " + e.message);
+    return false;
+  }
+  return true;
+}
+
+function save() {
+  if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0) {
+    alert("not supported in IE."); return;
+  }  
+  editmode(0);
+  document.getElementById('leftmenu').innerHTML = "";
+  document.getElementById('text').innerHTML = "";
+  document.getElementById('code').innerHTML = "";
+  document.getElementById('headline').innerHTML = "";
+  document.getElementById('codeTermName').innerHTML = "";
+  document.getElementById('chessboard1').innerHTML = "";
+  document.getElementById('chessboard2').innerHTML = "";
+  document.getElementById('chessboard3').innerHTML = "";
+  document.getElementById('thumbcaption').innerHTML = "";
+  document.getElementById('thumbcaption2').innerHTML = "";
+  document.getElementById('thumbcaption3').innerHTML = "";
+  document.getElementById('extlinks').innerHTML = "";
+  document.getElementById("seealso").innerHTML = "";
+  document.getElementById("codeGlobalPos").innerHTML = "";
+  document.getElementById("codeGlobalFunc").innerHTML = "";
+  document.getElementById("evalTable").innerHTML = "";
+  document.getElementById("graphData").innerHTML = "";
+
+  document.getElementById("editText").style = "width: 100%;";
+  document.getElementById("editCode").style = "width: 100%;";
+  document.getElementById("editLinks").style = "width: 100%;";
+  
+  document.getElementById('loadData').innerHTML = "var data = [], curindex = null;\n";
+  for (var i = 0; i < data.length; i++) {
+    document.getElementById('loadData').innerHTML += "data.push(" + JSON.stringify(data[i]) + ");\n";
+  }
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent("<!DOCTYPE html>\n"+document.documentElement.outerHTML));
+  element.setAttribute('download', 'saved.html');
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+  showMenu();
+  updatePage();
+}
+
+function golink(elem) {
+  var v = '';
+  if (elem && elem.nodeType && elem.innerHTML && elem.innerHTML.length > 0) v = elem.innerHTML;
+  else if (elem && elem.length > 0) v = elem; else return;
+  editmode(0);
+  showPage(v.toLowerCase().replace(/ /g, "_"));
+}
+function getParameterByName(name, url) {
+  if (!url) {
+    url = window.location.href;
+  }
+  name = name.replace(/[\[\]]/g, "\\$&");
+  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+      results = regex.exec(url);
+  if (!results || !results[2]) return "";
+  return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+function menuExpandCollapse(elem) {
+  var b = elem.nextSibling;
+  if (b == null) return;
+  if (b.style.display != "none") b.style.display = "none"; else b.style.display = "";
+}
+function showMenu() {
+  document.getElementById('leftmenu').innerHTML = "<div id=\"logo\"><a onclick=\"editmode(0);showPage('main_evaluation');\"></a></div>";
+  var grouplist = [{group:"",item:""}];
+  for (var i = 0; i < data.length; i++) {
+    var index = grouplist.map(function(e) { return e.group; }).indexOf(data[i].group);
+    if (index < 0) {
+      grouplist.push({group:data[i].group,item:"<li><a onclick=\"golink(this);\">" + data[i].name + "</a></li>"});
+    } else {
+      grouplist[index].item += "<li><a onclick=\"golink(this);\">" + data[i].name + "</a></li>";
+    }
+  }
+  grouplist.sort(function(a,b) {return (a.group > b.group) ? 1 : ((b.group > a.group) ? -1 : 0);} );
+  for (var i = 0; i < grouplist.length; i++) {
+    var div = document.createElement('div');
+    div.className = "group";
+    div.innerHTML = "<h3"
+     + (grouplist[i].group.length > 0 ? " onclick=\"menuExpandCollapse(this);\"" : "")
+     + ">" + grouplist[i].group + "</h3>"
+     + "<div class=\"body\""
+     + (grouplist[i].group.length > 0 ? "style=\"display:none;\"" : "")
+     + "><ul>" + grouplist[i].item + "</ul></div>";
+    document.getElementById('leftmenu').appendChild(div);
+  } 
+}
+function updatePage() {
+  var n1 = data[curindex].name, n2 = n1.toLowerCase().replace(/ /g, "_");
+  document.getElementById('text').innerHTML = data[curindex].text.replace("$", n1).replace(/\[\[/g,"<a onclick=\"golink(this);\">").replace(/\]\]/g,"</a>");
+  document.getElementById('code').innerHTML = data[curindex].code.replace(/\$\$/g, n2).replace(/\$/g, "");
+  document.getElementById('headline').innerHTML = n1;
+  document.getElementById('codeTermName').innerHTML = "\"" + n1 + "\"" + (data[curindex].forwhite ? " from the point of view of white player" : "");
+  showBoard();
+  var menu = document.getElementById('leftmenu');
+  for (var i = 0; i < menu.children.length; i++) {
+    if (menu.children[i].className == "group") {
+      if (menu.children[i].children[0].innerHTML == data[curindex].group) {
+        if (menu.children[i].children[1] != null) menu.children[i].children[1].style.display = "";
+      }
+    }
+  }
+}
+
+function showPage(name, search) {
+  var found = false, matchindex = -1, matchlen = -1;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].name.toLowerCase().replace(/ /g, "_") == name || ((name == null || name == "") && i == 0)) {
+      curindex = i;
+      found = true;
+      updatePage();
+    }
+    if (search && data[i].name.toLowerCase().replace(/ /g, "_").indexOf(name) >= 0) {
+      var len = data[i].name.length;
+      if (matchindex == -1 || len < matchlen) { matchindex = i; matchlen = len; }
+    }
+  }
+  if (!found) {
+    if (!search && confirm("Page not found. Do you want to create new one?")) {
+      data.push({});
+      curindex = data.length - 1;
+      document.getElementById('editName').value = name;
+      document.getElementById('editGroup').value = "";
+      document.getElementById('editText').value = "<b>$</b>. No description available.";
+      document.getElementById('editCode').value = "function $$(pos, square) {\n  return 0;\n}";
+      document.getElementById('editLinks').value = "";
+      document.getElementById('editEval').checked = false;
+      document.getElementById('editSquares').checked = false;
+      document.getElementById('editSquaresZero').checked = false;
+      document.getElementById('editHighlight').checked = false;
+      document.getElementById('editForwhite').checked = false;
+      document.getElementById('editForGraph').checked = false;
+      document.getElementById('editHighlightBlack').checked = false;
+      apply();
+    }
+    if (search && matchindex < 0) {
+      alert("Page not found.");
+    } else if (search && matchindex >= 0) {
+      curindex = matchindex;
+      updatePage();
+    }
+  }
+}
+function showBoard() {
+  var showindex = document.getElementById('bodyContentTable').style.display == ""
+               || document.getElementById('bodyContentGraph').style.display == "" ? 0 : curindex;
+  var pos = parseFEN(document.getElementById('fen').innerHTML);
+  var func = null, cureval = null, curevalflip = null, n2 = data[showindex].name.toLowerCase().replace(/ /g, "_");
+  
+  try {
+    eval("func = $" + n2 + ";");
+    cureval = func(pos);
+    if (data[showindex].forwhite) curevalflip = func(colorflip(pos));
+  }
+  catch (e) {
+    cureval = curevalflip = "[ERROR: " + e.message + "]";
+  }
+  
+  var elem = document.getElementById('chessboard1');
+  var elem2 = document.getElementById('chessboard2');
+  var elem3 = document.getElementById('chessboard3');
+  document.getElementById('persquaretitle').style.display = data[showindex].squares ? "" : "none";
+  document.getElementById('thumb2').style.display = data[showindex].squares ? "" : "none";
+  document.getElementById('thumb3').style.display = data[showindex].squares && data[showindex].forwhite ? "" : "none";
+  while (elem.firstChild) elem.removeChild(elem.firstChild);
+  while (elem2.firstChild) elem2.removeChild(elem2.firstChild);
+  while (elem3.firstChild) elem3.removeChild(elem3.firstChild);
+  for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
+    var div = document.createElement('div');
+    div.style.left = x * 28 + "px";
+    div.style.top = y * 28 + "px";
+    div.className = ((x + y) % 2 ? "d" : "l");
+    var div2 = div.cloneNode(), div3 = div.cloneNode();
+    div.className += " " + pos.b[x][y];
+
+    var sqeval = 0, sqevalblack = 0;
+    if (data[showindex].squares || data[showindex].highlight > 0) {
+      try {
+        sqeval = func(pos,{x:x,y:y});
+        if (data[showindex].forwhite) sqevalblack = func(colorflip(pos),{x:x,y:7-y});
+      }
+      catch (e) {}    
+    }
+    
+    if (data[showindex].highlight > 0 && func != null) {
+      if (sqeval != 0) div.className += " h1";
+    
+      if (data[showindex].highlight > 1 && data[showindex].forwhite) {
+        if (sqevalblack != 0) div.className += " h2";
+      }
+    }
+    elem.appendChild(div);
+    
+    if (data[showindex].squares && func != null) {
+      if (data[showindex].squares > 1 || sqeval != 0) {
+        div2.className += " h" + ((sqeval >= 1000 || sqeval <= -1000)? " s" : "");
+        div2.innerHTML = sqeval; 
+      }
+      elem2.appendChild(div2);
+    }
+    if (data[showindex].squares && data[showindex].forwhite && func != null) {
+      if (data[showindex].squares > 1 || sqevalblack != 0) {
+        div3.className += " h" + ((sqevalblack >= 1000 || sqevalblack <= -1000) ? " s" : "");
+        div3.innerHTML = sqevalblack;
+      }
+      elem3.appendChild(div3);
+    }
+  }
+  document.getElementById('thumb').style.display = data[showindex].eval ? "" : "none";
+  var whiteEvalString = data[showindex].name + (data[showindex].forwhite ? " (white)" : "") +  " = <b>" + cureval + "</b>";
+  var blackEvalString = data[showindex].forwhite ? data[showindex].name +  " (black) = <b>" + curevalflip + "</b><br/>" : "";
+  var totalEvalString = data[showindex].forwhite ? data[showindex].name + " (total) = <b>" + (cureval - curevalflip) + "</b>" : "";
+  document.getElementById('thumbcaption').innerHTML = whiteEvalString + (data[showindex].forwhite ? "<br/>" : "") + blackEvalString + totalEvalString;
+  document.getElementById('thumbcaption2').innerHTML = whiteEvalString;
+  document.getElementById('thumbcaption3').innerHTML = blackEvalString;
+  document.getElementById('extlinkstitle').style.display = data[showindex].links.length > 0 ? "" : "none";
+  document.getElementById('extlinks').innerHTML = "";
+  for (var i = 0; i < data[showindex].links.length; i++) {
+    var li = document.createElement('li');
+    li.innerHTML = '<a class="external" href="'+data[showindex].links[i][0]+'">'+data[showindex].links[i][1]+'</a>';
+    document.getElementById('extlinks').appendChild(li);
+  }
+
+  document.getElementById("seealso").innerHTML = "";
+  // parents
+  var nparent = 0,  parentlist = "";
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].code.indexOf("$"+n2+"(") >= 0) {
+      var intxt = "<a onclick=\"golink('"+data[i].name+"');\">" + data[i].name + "</a>";
+      document.getElementById("seealso").innerHTML += "<li>" + intxt + "</li>";
+      parentlist += (nparent > 0 ? ", " : "") + intxt;
+      nparent++;
+    }
+  }
+
+  // children
+  var list = [];
+  var text, state = 0, nchild = 0, childlist = "";
+  for (var i = 0; i < data[showindex].code.length; i++) {
+    var c = data[showindex].code[i].toLowerCase();
+    if (state == 0 && c == "$") {
+      state = 1;
+      text = "";
+    } else if (state == 1 && (c >= "a" && c <= "z" || c >= "0" && c <= "9" || c == "_")) text += c;
+    else if (state == 1) {
+      if (text.length > 0 && list.indexOf(text) < 0) list.push(text);
+      state = 0;
+    }
+  }
+  for (var i = 0; i < list.length; i++) {
+    var n = list[i][0].toUpperCase() + list[i].replace(/_/g, " ").substring(1).toLowerCase();
+    var intxt = "<a onclick=\"golink('"+n+"');\">" + n + "</a>";
+    childlist += (nchild > 0 ? ", " : "") + intxt;
+    document.getElementById("seealso").innerHTML += "<li>" + intxt + "</li>";
+    nchild++;
+  }  
+  document.getElementById('seealsotitle').style.display = nchild + nparent > 0 ? "" : "none";
+  document.getElementById("childlist").innerHTML = nchild == 0 ? "This function calls no evaluation subterms." : "This function calls following evaluation subterms: " + childlist;
+  document.getElementById("parentlist").innerHTML = nparent == 0 ? "It is used in no parent evaluation terms." : "It is used in following parent evaluation terms: " + parentlist;
+  if (document.getElementById('bodyContentTable').style.display == "") refreshTable(pos);
+  if (document.getElementById('bodyContentGraph').style.display == "") refreshGraph(pos);
+}
+
+function bounds(x, y) {
+  return x >= 0 && x <= 7 && y >= 0 && y <= 7;
+}
+function board(pos, x, y) {
+  if (x >= 0 && x <= 7 && y >= 0 && y <= 7) return pos.b[x][y];
+  return "x";
+}
+function colorflip(pos) {
+  var board = new Array(8);
+  for (var i = 0; i < 8; i++) board[i] = new Array(8);
+  for (x = 0; x < 8; x++) for (y = 0; y < 8; y++) {
+    board[x][y] = pos.b[x][7-y];
+    var color = board[x][y].toUpperCase() == board[x][y];
+    board[x][y] = color ? board[x][y].toLowerCase() : board[x][y].toUpperCase();
+  }
+  return {b:board, c:[pos.c[2],pos.c[3],pos.c[0],pos.c[1]], e:pos.e == null ? null : [pos.e[0],7-pos.e[1]], w:!pos.w, m:[pos.m[0],pos.m[1]]};
+}
+function sum(pos, func, param) {
+  var sum = 0;
+  for (var x = 0; x < 8; x++) for(var y = 0; y < 8; y++) sum += func(pos, {x:x, y:y}, param);
+  return sum;
+}
+
+function parseFEN(fen) {
+  var board = new Array(8);
+  for (var i = 0; i < 8; i++) board[i] = new Array(8);
+  var a = fen.replace(/^\s+/,'').split(' '), s = a[0], x, y;
+  for (x = 0; x < 8; x++) for (y = 0; y < 8; y++) {
+    board[x][y] = '-';
+  }
+  x = 0, y = 0;
+  for (var i = 0; i < s.length; i++) {
+    if (s[i] == ' ') break;
+    if (s[i] == '/') {
+      x = 0;
+      y++;
+    } else {
+      if (!bounds(x, y)) continue;
+      if ('KQRBNP'.indexOf(s[i].toUpperCase()) != -1) {
+        board[x][y] = s[i];
+        x++;
+      } else if ('0123456789'.indexOf(s[i]) != -1) {
+        x += parseInt(s[i]);
+      } else x++;
+    }
+  }
+  var castling, enpassant, whitemove = !(a.length > 1 && a[1] == 'b');  
+  if (a.length > 2) {
+    castling = [ a[2].indexOf('K') != -1, a[2].indexOf('Q') != -1,
+                 a[2].indexOf('k') != -1, a[2].indexOf('q') != -1];
+  } else {
+    castling = [ true, true, true, true ];
+  }
+  if (a.length > 3 && a[3].length == 2) {
+    var ex = 'abcdefgh'.indexOf(a[3][0]);
+    var ey = '87654321'.indexOf(a[3][1]);
+    enpassant = (ex >= 0 && ey >= 0) ? [ex, ey] : null;
+  } else {
+    enpassant = null;
+  }
+  var movecount = [(a.length > 4 && !isNaN(a[4]) && a[4] != '') ? parseInt(a[4]) : 0,
+                   (a.length > 5 && !isNaN(a[5]) && a[5] != '') ? parseInt(a[5]) : 1];
+  return {b:board, c:castling, e:enpassant, w:whitemove, m:movecount};
+}
+
+function generateFEN(pos) {
+  var s = '', f = 0, castling = pos.c, enpassant = pos.e, board = pos.b;
+  for (var y = 0; y < 8; y++) {
+    for (var x = 0; x < 8; x++) {
+      if (board[x][y] == '-') {
+        f++;
+      } else {
+        if (f > 0) s += f, f = 0;
+        s += board[x][y];
+      }
+    }
+    if (f > 0) s += f, f = 0;
+    if (y < 7) s += '/';
+  }
+  s += ' ' + (pos.w ? 'w' : 'b')
+     + ' ' + ((castling[0] || castling[1] || castling[2] || castling[3])
+           ? ((castling[0] ? 'K' : '') + (castling[1] ? 'Q' : '') +
+             (castling[2] ? 'k' : '') + (castling[3] ? 'q' : ''))
+           : '-')
+     + ' ' + (enpassant == null ? '-' : ('abcdefgh'[enpassant[0]] + '87654321'[enpassant[1]]))
+     + ' ' + pos.m[0] + ' ' + pos.m[1];
+  return s;
+}
+
+function isWhiteCheck(pos) {
+  var kx = null, ky = null;
+  for (var x = 0; x < 8; x++) {
+    for (var y = 0; y < 8; y++) {
+      if (pos.b[x][y] == 'K') { kx = x; ky = y; }
+    }
+  }
+  if (kx == null || ky == null) return false;
+  if (  board(pos, kx + 1, ky - 1) == 'p'
+     || board(pos, kx - 1, ky - 1) == 'p'
+     || board(pos, kx + 2, ky + 1) == 'n'
+     || board(pos, kx + 2, ky - 1) == 'n'
+     || board(pos, kx + 1, ky + 2) == 'n'
+     || board(pos, kx + 1, ky - 2) == 'n'
+     || board(pos, kx - 2, ky + 1) == 'n'
+     || board(pos, kx - 2, ky - 1) == 'n'
+     || board(pos, kx - 1, ky + 2) == 'n'
+     || board(pos, kx - 1, ky - 2) == 'n'
+     || board(pos, kx - 1, ky - 1) == 'k'
+     || board(pos, kx    , ky - 1) == 'k'
+     || board(pos, kx + 1, ky - 1) == 'k'
+     || board(pos, kx - 1, ky    ) == 'k'
+     || board(pos, kx + 1, ky    ) == 'k'
+     || board(pos, kx - 1, ky + 1) == 'k'
+     || board(pos, kx    , ky + 1) == 'k'
+     || board(pos, kx - 1, ky + 1) == 'k') return true; 
+  for (var i = 0; i < 8; i++) {
+    var ix = (i + (i > 3)) % 3 - 1;
+    var iy = (((i + (i > 3)) / 3) << 0) - 1;
+    for (var d = 1; d < 8; d++) {
+      var b = board(pos, kx + d * ix, ky + d * iy);
+      var line = ix == 0 || iy == 0;
+      if (b == 'q' || b == 'r' && line || b == 'b' && !line) return true;
+      if (b != "-") break;
+    }
+  }
+  return false;
+}
+function doMove(pos, from, to, promotion) {
+  if (pos.b[from.x][from.y].toUpperCase() != pos.b[from.x][from.y]) {
+    var r = colorflip(doMove(colorflip(pos),{x:from.x,y:7-from.y}, {x:to.x,y:7-to.y}, promotion));
+    r.m[1]++;
+    return r;
+  }
+  var r = colorflip(colorflip(pos));
+  r.w = !r.w;
+  if (from.x == 7 && from.y == 7 || to.x == 7 && to.y == 7) r.c[0] = false;
+  if (from.x == 0 && from.y == 7 || to.x == 0 && to.y == 7) r.c[1] = false;
+  if (from.x == 4 && from.y == 7 || to.x == 4 && to.y == 7) r.c[0] = r.c[1] = false;
+  r.e = pos.b[from.x][from.y] == 'P' && from.y == 6 && to.y == 4 ? [from.x, 5] : null;
+  if (pos.b[from.x][from.y] == 'K') {
+    if (Math.abs(from.x - to.x) > 1) {
+      r.b[from.x][from.y] = '-';
+      r.b[to.x][to.y] = 'K';
+      r.b[to.x > 4 ? 5 : 3][to.y] = 'R';
+      r.b[to.x > 4 ? 7 : 0][to.y] = '-';
+      return r;
+    }
+  }
+  if (pos.b[from.x][from.y] == 'P' && to.y == 0) {
+    r.b[to.x][to.y] = promotion != null ? promotion : 'Q';
+  } else if (pos.b[from.x][from.y] == 'P'
+          && pos.e != null && to.x == pos.e[0] && to.y == pos.e[1]
+          && Math.abs(from.x - to.x) == 1) {
+    r.b[to.x][from.y] = '-';
+    r.b[to.x][to.y] = pos.b[from.x][from.y];
+    
+  } else {
+    r.b[to.x][to.y] = pos.b[from.x][from.y];
+  }
+  r.b[from.x][from.y] = '-';
+  r.m[0] = (pos.b[from.x][from.y] == 'P' || pos.b[to.x][to.y] != '-') ? 0 : r.m[0] + 1;
+  return r;
+}
+function isLegal(pos, from, to) {
+  if (!bounds(from.x, from.y)) return false;
+  if (!bounds(to.x, to.y)) return false;
+  if (from.x == to.x && from.y == to.y) return false;
+  if (pos.b[from.x][from.y] != pos.b[from.x][from.y].toUpperCase()) {
+    return isLegal(colorflip(pos), {x:from.x,y:7-from.y}, {x:to.x,y:7-to.y})
+  }
+  if (!pos.w) return false;
+  var pfrom = pos.b[from.x][from.y];
+  var pto = pos.b[to.x][to.y];
+  if (pto.toUpperCase() == pto && pto != '-') return false;
+  if (pfrom == '-') {
+    return false;
+  } else if (pfrom == 'P') {
+    var enpassant = pos.e != null && to.x == pos.e[0] && to.y == pos.e[1];
+    if (!((from.x == to.x && from.y == to.y + 1 && pto == '-')
+       || (from.x == to.x && from.y == 6 && to.y == 4 && pto== '-' && pos.b[to.x][5] == '-')
+       || (Math.abs(from.x - to.x) == 1 && from.y == to.y + 1 && (pto != '-' || enpassant))
+       )) return false;
+  } else if (pfrom == 'N') {
+    if (Math.abs(from.x - to.x) < 1 || Math.abs(from.x - to.x) > 2) return false;
+    if (Math.abs(from.y - to.y) < 1 || Math.abs(from.y - to.y) > 2) return false;
+    if (Math.abs(from.x - to.x) + Math.abs(from.y - to.y) != 3) return false;
+  } else if (pfrom == 'K') {
+    var castling = true;
+    if (from.y != 7 || to.y != 7) castling = false;
+    if (from.x != 4 || (to.x != 2 && to.x != 6)) castling = false;
+    if (to.x == 6 && !pos.c[0] || to.x == 2 && !pos.c[1]) castling = false;
+    if (to.x == 2 && pos.b[0][7]+pos.b[1][7]+pos.b[2][7]+pos.b[3][7] != 'R---') castling = false;
+    if (to.x == 6 && pos.b[5][7]+pos.b[6][7]+pos.b[7][7] != '--R') castling = false;
+    if ((Math.abs(from.x - to.x) > 1 || Math.abs(from.y - to.y) > 1) && !castling) return false;
+    if (castling && isWhiteCheck(pos)) return false;
+    if (castling && isWhiteCheck(doMove(pos,from,{x:to.x == 2 ? 3 : 5,y:7}))) return false;
+  }
+  if (pfrom == 'B' || pfrom == 'R' || pfrom == 'Q') {
+    var a = from.x - to.x, b = from.y - to.y;
+    var line = a == 0 || b == 0;
+    var diag = Math.abs(a) == Math.abs(b);
+    if (!line && !diag) return false;
+    if (pfrom == 'R' && !line) return false;
+    if (pfrom == 'B' && !diag) return false;
+    var count = Math.max(Math.abs(a), Math.abs(b));
+    var ix = a > 0 ? -1 : a < 0 ? 1 : 0, iy = b > 0 ? -1 : b < 0 ? 1 : 0;
+    for (var i = 1; i < count; i++) {
+      if (pos.b[from.x+ix*i][from.y+iy*i] != '-') return false;
+    }
+  }
+  if (isWhiteCheck(doMove(pos, from, to))) return false;
+  return true;
+}
+function parseMove(pos, s) {
+  var promotion = null;
+  s = s.replace(/[\+|#|\?|x]/g,"");
+  if (s.length >= 2 && s[s.length - 2] == "=") {
+    promotion = s[s.length - 1]
+    s = s.substring(0, s.length - 2);
+  }
+  if (s == "O-O" || s == "O-O-O") {
+    var from = {x:4,y:pos.w?7:0}, to = {x:s=="O-O"?6:2,y:pos.w?7:0};
+    if (isLegal(pos, from, to)) return {from:from, to:to}; else return null;
+  } else {
+    var p;
+    if ("PNBRQK".indexOf(s[0]) < 0) {
+      p = "P";
+    } else {
+      p = s[0];
+      s = s.substring(1);
+    }
+    if (s.length < 2 || s.length > 4) return null;
+    var xto = "abcdefgh".indexOf(s[s.length-2]);
+    var yto = "87654321".indexOf(s[s.length-1]);
+    var xfrom = -1, yfrom = -1;
+    if (s.length > 2) {
+      xfrom = "abcdefgh".indexOf(s[0]);
+      yfrom = "87654321".indexOf(s[s.length-3]);
+    }
+    for (var x = 0; x < 8; x++) {
+      for (var y = 0; y < 8; y++) {
+        if (xfrom != -1 && xfrom != x) continue;
+        if (yfrom != -1 && yfrom != y) continue;
+        if (pos.b[x][y] == (pos.w ? p : p.toLowerCase()) && isLegal(pos, {x:x,y:y}, {x:xto,y:yto})) {
+          xfrom = x;
+          yfrom = y;
+        }
+      }
+    }
+    if (xto < 0 || yto < 0 || xfrom < 0 || yfrom < 0) return null;
+    return {from:{x:xfrom,y:yfrom},to:{x:xto,y:yto},p:promotion};
+  }
+}
+
+var _history = [], _historyindex = -1;
+function historyadd(fen) {
+  if (_historyindex >= 0 && _history[_historyindex] == fen) return;
+  _historyindex++;
+  _history.length = _historyindex;
+  _history.push(fen);
+  document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
+  document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";
+}
+function historymove(v, e) {
+  if (e == null) e = window.event;
+  if (_historyindex == _history.length - 1
+   && _history[_historyindex] != document.getElementById('fen').innerHTML) historyadd(document.getElementById('fen').innerHTML);
+  if (_historyindex + v >= 0 && _historyindex + v < _history.length) _historyindex += v;
+  if (e != null && e.ctrlKey && Math.abs(v) == 1) _historyindex = v == 1 ? _history.length - 1 : 0;
+  document.getElementById('fen').innerHTML = _history[_historyindex];
+  document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
+  document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";  
+  showBoard();
+}
+
+var _dragElement = null, _dragActive = false, _startX, _startY, _dragCtrl;
+function onMouseDown(e, button) {
+
+  if (e == null) e = window.event;
+  var elem = target = e.target != null ? e.target : e.srcElement;
+  while (target != null && target.id != 'chessboard1' && target.tagName != 'BODY') {
+    target = target.parentNode;
+  }  
+  if (target.id != 'chessboard1') return true;
+  if (elem.className[2] == '-') return true;
+  document.onmousemove = onMouseMove;
+  document.body.focus();
+  document.onselectstart = function () { return false; };
+  elem.ondragstart = function () { return false; };
+  _dragActive = false;
+  _dragCtrl = e.ctrlKey;
+  _dragElement = elem;
+  _startX = e.clientX;
+  _startY = e.clientY;
+  return false;
+
+}
+
+function onMouseMove(e) {
+  if (_dragElement == null) return;
+  if (e == null) e = window.event;
+  if (!_dragActive) {
+    if (Math.abs(e.clientX - _startX) < 4 && Math.abs(e.clientY - _startY) < 4) return;
+    var clone = _dragElement.cloneNode();
+    if (!_dragCtrl) _dragElement.className = _dragElement.className[0] + " -";
+    _dragElement = clone;
+    _dragElement.className = _dragElement.className.substring(0, 3);
+    _dragElement.style.backgroundColor = "transparent";
+    _dragElement.style.zIndex = 10000;
+    document.getElementById('chessboard1').appendChild(_dragElement);
+    _dragActive = true;
+  }
+
+  var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + _dragElement.getBoundingClientRect().width / 2;
+  var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + _dragElement.getBoundingClientRect().height / 2;
+  _dragElement.style.left = (e.clientX - offsetX) + 'px';
+  _dragElement.style.top = (e.clientY - offsetY) + 'px';
+}
+
+function onMouseUp(e) {
+  if (_dragElement != null) {
+    if (_dragActive) {
+      var w = _dragElement.getBoundingClientRect().width;
+      var h = _dragElement.getBoundingClientRect().height;
+      var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + w / 2;
+      var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + h / 2;
+      var x1 = Math.round((_startX - offsetX) / w);
+      var y1 = Math.round((_startY - offsetY) / h);
+      var x2 = Math.round((e.clientX - offsetX) / w);
+      var y2 = Math.round((e.clientY - offsetY) / h);
+      
+      var pos = parseFEN(document.getElementById('fen').innerHTML);
+      var legal = !_dragCtrl && isLegal(pos,{x:x1,y:y1},{x:x2,y:y2});
+      if (legal) {
+        pos = doMove(pos,{x:x1,y:y1},{x:x2,y:y2});
+      } else {
+        if (bounds(x2, y2)) pos.b[x2][y2] = pos.b[x1][y1];
+        if (!_dragCtrl && (x1 != x2 || y1 != y2)) pos.b[x1][y1] = '-';
+      }
+      historyadd(document.getElementById('fen').innerHTML);
+      document.getElementById('fen').innerHTML = generateFEN(pos);
+      historyadd(document.getElementById('fen').innerHTML);
+      showBoard();
+    }
+
+    document.onmousemove = null;
+    document.onselectstart = null;
+    _dragElement = null;
+    return false;
+  }
+}
+
+var timer, special = null;
+function chessboardOnDblClick(e) {
+  if (e == null) e = window.event;
+  var elem = target = e.target != null ? e.target : e.srcElement;
+
+  var w = elem.getBoundingClientRect().width;
+  var h = elem.getBoundingClientRect().height;
+  var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + w / 2;
+  var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + h / 2;
+  var x1 = Math.round((e.clientX - offsetX) / w);
+  var y1 = Math.round((e.clientY - offsetY) / h);  
+  var pos = parseFEN(document.getElementById('fen').innerHTML);
+  if (bounds(x1, y1)) {
+    var s = '-PNBRQKpnbrqk-', index = s.indexOf(pos.b[x1][y1]);
+    if (e.ctrlKey) index = index >= 1 && index <= 6 ? index + 6 : (index > 6 ? index - 6 : index); else index++;
+    pos.b[x1][y1] = s[index];
+  }
+  document.getElementById('fen').innerHTML = generateFEN(pos);
+  showBoard();
+  
+  document.getElementById('chessboard1').onclick = chessboardOnDblClick;
+  if (timer) window.clearTimeout(timer);
+  timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
+}
+
+window.onload = function () {
+  showMenu();
+  doEval();
+  showPage(getParameterByName("p").toLowerCase());
+  editmode(0);
+  document.onmousedown = onMouseDown;
+  document.onmouseup = onMouseUp;
+  document.getElementById('chessboard1').ondblclick = chessboardOnDblClick;  
+  historyadd(document.getElementById('fen').innerHTML);
+}
+
+
+    </script>
+    <script id="loadData">var data = [], curindex = null;
+data.push({"name":"Main evaluation","group":"","text":"<b>$</b>. An evaluation function is used to heuristically determine the relative value of a positions used in general case when no specialized evaluation or tablebase evaluation is available. In Stockfish it is never applied for positions where king of either side is in check. Resulting value is computed by combining [[Middle game evaluation]] and [[End game evaluation]]. We use <a class=\"external\" href=\"https://chessprogramming.wikispaces.com/Tapered+Eval\">Tapered Eval</a>, a technique used in evaluation to make a smooth transition between the phases of the game. [[Phase]] is a coeficient of simple linear combination. Before using  [[End game evaluation]] in this formula we also scale it down using [[Scale factor]].","code":"function $$(pos) {\n  var mg = $middle_game_evaluation(pos);\n  var eg = $end_game_evaluation(pos);\n  var p = $phase(pos), t = $tempo(pos);\n  eg = eg * $scale_factor(pos, eg) / 64;\n  return ((((mg * p + eg * (128 - p)) << 0) / 128) << 0) + t;\n}","links":[["https://chessprogramming.wikispaces.com/Evaluation","Evaluation in cpw"],["https://chessprogramming.wikispaces.com/Tapered+Eval","Tapered Eval in cpw"],["https://chessprogramming.wikispaces.com/Game+Phases","Game Phases in cpw"],["https://chessprogramming.wikispaces.com/Tempo","Tempo in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false});
+data.push({"name":"Isolated","group":"Pawns","text":"<b>$</b> checks if pawn is isolated. In chess, an isolated pawn is a pawn which has no friendly pawn on an adjacent file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0 ; y < 8; y++) {\n    if (board(pos, square.x - 1, y) == \"P\") return 0;\n    if (board(pos, square.x + 1, y) == \"P\") return 0;\n  }\n  return 1;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Opposed","group":"Pawns","text":"<b>$</b> flag is set if there is opponent opposing pawn on the same file to prevent it from advancing.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0; y < square.y; y++) {\n    if (board(pos, square.x, y) == \"p\") return 1;\n  }\n  return 0;\n}","links":[["https://chessprogramming.wikispaces.com/Evaluation","Evaluation"],["https://chessprogramming.wikispaces.com/Tapered+Eval","Tapered Eval"],["https://chessprogramming.wikispaces.com/Game+Phases","Game Phases"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Rank","group":"Helpers","text":"<b>$</b> calculates rank of square.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return 8 - square.y;\n}","links":[],"eval":true,"squares":2,"highlight":0,"forwhite":true});
+data.push({"name":"File","group":"Helpers","text":"<b>$</b> calculates file of square.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return 1 + square.x;\n}","links":[],"eval":true,"squares":2,"highlight":0,"forwhite":true});
+data.push({"name":"Phalanx","group":"Pawns","text":"<b>$</b> flag is set if there is friendly pawn on adjacent file and same rank.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if (board(pos, square.x - 1, square.y) == \"P\") return 1;\n  if (board(pos, square.x + 1, square.y) == \"P\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Supported","group":"Pawns","text":"<b>$</b> counts number of pawns supporting this pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  return (board(pos, square.x - 1, square.y + 1) == \"P\" ? 1 : 0)\n       + (board(pos, square.x + 1, square.y + 1) == \"P\" ? 1 : 0);\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Lever","group":"Pawns","text":"<b>$</b> flag is set if our pawn attacks opponent pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 1;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Backward","group":"Pawns","text":"A pawn is <b>$</b> when it is behind all pawns of the same color on the adjacent files and cannot be safely advanced.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if ($isolated(pos, square) || $lever(pos, square) || $rank(pos, square) > 5) return 0;\n  var r = 8;\n  for (var y = 0 ; y < 8; y++) {\n    if (board(pos, square.x - 1, y) == \"P\"\n     || board(pos, square.x + 1, y) == \"P\"\n     || y < square.y && (board(pos, square.x - 1, y) == \"p\"\n                      || board(pos, square.x    , y) == \"p\"\n                      || board(pos, square.x + 1, y) == \"p\")) r = y;\n  }\n  if (r >= square.y) return 0;\n  if (board(pos, square.x - 1, r) == \"p\"\n   || board(pos, square.x    , r) == \"p\"\n   || board(pos, square.x + 1, r) == \"p\"\n   || board(pos, square.x - 1, r - 1) == \"p\"\n   || board(pos, square.x + 1, r - 1) == \"p\") return 1\n return 0;\n}","links":[],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Unsupported","group":"Pawns","text":"<b>$</b> checks if pawn is not [[Supported]], not [[Isolated]] and not [[Backward]].","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if ($isolated(pos, square) || $backward(pos, square) || $supported(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Doubled","group":"Pawns","text":"<b>$</b> checks if pawn is doubled. In chess, an doubled pawn is a pawn which has another friendly pawn on same file but in Stockfish we attach doubled pawn penalty only for pawn which has another friendly pawn on square directly in front of that pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if (board(pos, square.x, square.y - 1) == \"P\") return 1;\n  return 0;\n}","links":[["https://en.wikipedia.org/wiki/Doubled_pawn","Doubled pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Connected","group":"Pawns","text":"<b>$</b> checks if pawn is [[Supported]] or [[Phalanx]].","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if ($supported(pos, square) || $phalanx(pos, square)) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Middle game evaluation","group":"","text":"<b>$</b>. Evaluates position for the middlegame and the opening phases.","code":"function $$(pos) {\n  var v = 0;\n  v += $piece_value_mg(pos) - $piece_value_mg(colorflip(pos));\n  v += $psqt_mg(pos) - $psqt_mg(colorflip(pos));\n  v += $imbalance_total(pos);\n  v += $pawns_mg(pos) - $pawns_mg(colorflip(pos));\n  v += $pieces_mg(pos) - $pieces_mg(colorflip(pos));\n  v += $mobility_mg(pos) - $mobility_mg(colorflip(pos));\n  v += $threats_mg(pos) - $threats_mg(colorflip(pos));\n  v += $passed_mg(pos) - $passed_mg(colorflip(pos));\n  v += $space(pos) - $space(colorflip(pos));\n  v += $king_mg(pos) - $king_mg(colorflip(pos));\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false});
+data.push({"name":"End game evaluation","group":"","text":"<b>$</b>. Evaluates position for the endgame phase.","code":"function $$(pos, noinitiative) {\n  var v = 0;\n  v += $piece_value_eg(pos) - $piece_value_eg(colorflip(pos));\n  v += $psqt_eg(pos) - $psqt_eg(colorflip(pos));\n  v += $imbalance_total(pos);\n  v += $pawns_eg(pos) - $pawns_eg(colorflip(pos));\n  v += $pieces_eg(pos) - $pieces_eg(colorflip(pos));\n  v += $mobility_eg(pos) - $mobility_eg(colorflip(pos));\n  v += $threats_eg(pos) - $threats_eg(colorflip(pos));\n  v += $passed_eg(pos) - $passed_eg(colorflip(pos));\n  v += $king_eg(pos) - $king_eg(colorflip(pos));\n  if (!noinitiative) v += $initiative_total(pos, v);\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false});
+data.push({"name":"Scale factor","group":"","text":"<b>$</b>. The scale factors are used to scale the endgame evaluation score down.","code":"function $$(pos, eg) {\n  if (eg == null) eg = $end_game_evaluation(pos);\n  var pos_w = eg > 0 ? pos : colorflip(pos);\n  var pos_b = eg > 0 ? colorflip(pos) : pos;\n  var sf = 64;\n  var pc_w = $pawn_count(pos_w);\n  var pc_b = $pawn_count(colorflip(pos_b));\n  var npm_w = $non_pawn_material(pos_w);\n  var npm_b = $non_pawn_material(colorflip(pos_b));\n  if (pc_w == 0 && npm_w - npm_b <= 826) sf = npm_w < 1285 ? 0 : npm_b <= 826 ? 4 : 14;\n  if (pc_w == 1 && npm_w - npm_b <= 826) sf = 48;\n  if ($phase(pos) < 128 && (sf == 64 || sf == 48)) {\n    if ($opposite_bishops(pos)) {\n      if (npm_w == 826 && npm_b == 826) sf = (pc_w + pc_b > 1) ? 31 : 9;\n      else sf = 46;\n    } else if (Math.abs(eg) <= 826 && pc_w <= 2) {\n      var kx = 0, ky = 0, kingPassed = true;\n      for (var x = 0 ; x < 8; x++) {\n        for (var y = 0 ; y < 8; y++) {\n          if (board(pos_w, x, y) == \"k\") {\n            kx = x;\n            ky = y;\n          }\n        }\n      }\n      for (var y = 0 ; y < ky; y++) {\n        if (board(pos_w, kx - 1, y) == \"P\") kingPassed = false;\n        if (board(pos_w, kx    , y) == \"P\") kingPassed = false;\n        if (board(pos_w, kx + 1, y) == \"P\") kingPassed = false;\n        if (board(pos_w, kx    , y) == \"p\") kingPassed = false;\n      }\n      if (!kingPassed) sf = 37 + 7 * pc_w;\n    }\n  }\n  return sf;\n}","links":[["https://chessprogramming.wikispaces.com/Bishops+of+Opposite+Colors","Bishops of Opposite Colors in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"Phase","group":"","text":"<b>$</b>. We define phase value for tapered eval based on the amount of non-pawn material on the board.","code":"function $$(pos) {\n  var midgameLimit = 15258, endgameLimit  = 3915;\n  var npm = $non_pawn_material(pos) + $non_pawn_material(colorflip(pos));\n  npm = Math.max(endgameLimit, Math.min(npm, midgameLimit));\n  return (((npm - endgameLimit) * 128) / (midgameLimit - endgameLimit)) << 0;\n}","links":[["https://chessprogramming.wikispaces.com/Game+Phases","Game Phases in cpw"],["https://chessprogramming.wikispaces.com/Tapered+Eval","Tapered Eval in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false});
+data.push({"name":"Imbalance","group":"Imbalance","text":"<b>$</b> calculates the imbalance by comparing the piece count of each piece type for both colors. Evaluate the material imbalance. We use a place holder for the bishop pair \"extended piece\", which allows us to be more flexible in defining bishop pair bonuses.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var qo = [[0],[40,2],[32,255,-3],[0,104,4,0],[-26,-2,47,105,-149],[-185,24,122,137,-134,0]];\n  var qt = [[0],[36,0],[9,63,0],[59,65,42,0],[46,39,24,-24,0],[101,100,-37,141,268,0]];\n  var j = \"XPNBRQxpnbrq\".indexOf(board(pos, square.x, square.y));\n  if (j < 0 || j > 5) return 0;\n  var bishop = [0, 0], v = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      var i = \"XPNBRQxpnbrq\".indexOf(board(pos, x, y));\n      if (i < 0) continue;\n      if (i == 9) bishop[0]++;\n      if (i == 3) bishop[1]++;\n      if (i % 6 > j) continue;\n      if (i > 5) v += qt[j][i-6];\n            else v += qo[j][i];\n    }\n  }\n  if (bishop[0] > 1) v += qt[j][0];\n  if (bishop[1] > 1) v += qo[j][0];\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Bishop count","group":"Helpers","text":"<b>$</b> counts number of our bishops.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) == \"B\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Bishop pair","group":"Imbalance","text":"<b>$</b>. The player with two bishops is said to have the bishop pair.","code":"function $$(pos) {\n  if ($bishop_count(pos) > 1) return 1667;\n  return 0;\n}","links":[["https://chessprogramming.wikispaces.com/Bishop+Pair","Bishop Pair on cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Pinned","group":"Attack","text":"<b>$</b>. In chess, absolute pin is a situation brought on by a sliding attacking piece in which a defending piece cannot move because moving away the pinned piece would illegally expose the king to check.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"PNBRQK\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  for (var i = 0; i < 8; i++) {\n    var ix = (i + (i > 3)) % 3 - 1;\n    var iy = (((i + (i > 3)) / 3) << 0) - 1;\n    var king = false;\n    for (var d = 1; d < 8; d++) {\n      var b = board(pos, square.x + d * ix, square.y + d * iy);\n      if (b == \"K\") king = true;\n      if (b != \"-\") break;\n    }\n    if (king) {\n      for (var d = 1; d < 8; d++) {\n        var b = board(pos, square.x - d * ix, square.y - d * iy);\n        if (b == \"q\"\n         || b == \"b\" && ix * iy != 0\n         || b == \"r\" && ix * iy == 0) return Math.abs(ix + iy * 3);\n        if (b != \"-\") break;\n      }\n    }\n  }\n  return 0;\n}","links":[["https://en.wikipedia.org/wiki/Pin_(chess)","Pin in wikipedia"],["https://chessprogramming.wikispaces.com/Pin","Pin in cpw"]],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Mobility","group":"Mobility","text":"<b>$</b>. Number of attacked squares in the [[Mobility area]]. For queen squares defended by opponent knight, bishop or rook are ignored.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;  \n  var b = board(pos, square.x, square.y);\n  if (\"NBRQ\".indexOf(b) < 0) return 0;\n  for (var x = 0; x < 8; x++) {\n    for(var y = 0; y < 8; y++) {\n      var s2 = {x:x, y:y};\n      if (!$mobility_area(pos, s2)) continue;\n      if (b == \"N\" && $knight_attack(pos, s2, square)) v++;\n      if (b == \"B\" && $bishop_xray_attack(pos, s2, square)) v++;\n      if (b == \"R\" && $rook_xray_attack(pos, s2, square)) v++;\n      if (b == \"Q\" && $queen_attack(pos, s2, square)) {\n        var pos2 = colorflip(pos);\n        if (!$knight_attack(pos2, {x:x,y:7-y})\n         && !$bishop_xray_attack(pos2, {x:x,y:7-y})\n         && !$rook_xray_attack(pos2, {x:x,y:7-y})) v++;\n      }\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Mobility area","group":"Mobility","text":"<b>$</b>. Do not include in mobility area squares protected by enemy pawns, or occupied by our blocked pawns or king. Pawns blocked or on ranks 2 and 3 will be excluded from the mobility area.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) == \"K\") return 0;\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x, square.y) == \"P\" &&\n     ($rank(pos, square) < 4 || board(pos, square.x, square.y - 1) != \"-\")) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Mobility bonus","group":"Mobility","text":"<b>$</b> attach bonuses for middlegame and endgame by piece type and [[Mobility]].","code":"function $$(pos, square, mg) {\n  if (square == null) return sum(pos, $$, mg);\n  var bonus = mg ? [\n    [-75,-56,-9,-2,6,15,22,30,36],\n    [-48,-21,16,26,37,51,54,63,65,71,79,81,92,97],\n    [-56,-25,-11,-5,-4,-1,8,14,21,23,31,32,43,49,59],\n    [-40,-25,2,4,14,24,25,40,43,47,54,56,60,70,72,73,75,77,85,94,99,108,112,113,118,119,123,128]\n  ] : [\n    [-76,-54,-26,-10,5,11,26,28,29],\n    [-58,-19,-2,12,22,42,54,58,63,70,74,86,90,94],\n    [-78,-18,26,55,70,81,109,120,128,143,154,160,165,168,169],\n    [-35,-12,7,19,37,55,62,76,79,87,94,102,111,116,118,122,128,130,133,136,140,157,158,161,174,177,191,199]\n  ];\n  var i = \"NBRQ\".indexOf(board(pos, square.x, square.y));\n  if (i < 0) return 0;\n  return bonus[i][$mobility(pos, square)];\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Knight attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by knight.","code":"function $$(pos, square, s2) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  for (var i = 0; i < 8; i++) {\n    var ix = ((i > 3) + 1) * (((i % 4) > 1) * 2 - 1);\n    var iy = (2 - (i > 3)) * ((i % 2 == 0) * 2 - 1);\n    var b = board(pos, square.x + ix, square.y + iy);\n    if (b == \"N\"\n    && (s2 == null || s2.x == square.x + ix && s2.y == square.y + iy)\n    && !$pinned(pos, {x:square.x + ix, y:square.y + iy})) v++;\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Bishop xray attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by bishop. Includes x-ray attack through our queen.","code":"function $$(pos, square, s2) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  for (var i = 0; i < 4; i++) {\n    var ix = ((i > 1) * 2 - 1);\n    var iy = ((i % 2 == 0) * 2 - 1);\n    for (var d = 1; d < 8; d++) {\n      var b = board(pos, square.x + d * ix, square.y + d * iy);\n      if (b == \"B\"\n      && (s2 == null || s2.x == square.x + d * ix && s2.y == square.y + d * iy)) {\n        var dir = $pinned(pos, {x:square.x+d*ix, y:square.y+d*iy});\n        if (dir == 0 || Math.abs(ix+iy*3) == dir) v++;\n      }\n      if (b != \"-\" && b != \"Q\") break;\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Rook xray attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by rook. Includes x-ray attack through our queen or rook.","code":"function $$(pos, square, s2) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  for (var i = 0; i < 4; i++) {\n    var ix = (i == 0 ? -1 : i == 1 ? 1 : 0);\n    var iy = (i == 2 ? -1 : i == 3 ? 1 : 0);\n    for (var d = 1; d < 8; d++) {\n      var b = board(pos, square.x + d * ix, square.y + d * iy);\n      if (b == \"R\"\n      && (s2 == null || s2.x == square.x + d * ix && s2.y == square.y + d * iy)) {\n        var dir = $pinned(pos, {x:square.x+d*ix, y:square.y+d*iy});\n        if (dir == 0 || Math.abs(ix+iy*3) == dir) v++;\n      }\n      if (b != \"-\" && b != \"R\" && b != \"Q\") break;\n    }\n  }\n\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Queen attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by queen.","code":"function $$(pos, square, s2) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  for (var i = 0; i < 8; i++) {\n    var ix = (i + (i > 3)) % 3 - 1;\n    var iy = (((i + (i > 3)) / 3) << 0) - 1;\n    for (var d = 1; d < 8; d++) {\n      var b = board(pos, square.x + d * ix, square.y + d * iy);\n      if (b == \"Q\"\n      && (s2 == null || s2.x == square.x + d * ix && s2.y == square.y + d * iy)) {\n        var dir = $pinned(pos, {x:square.x+d*ix, y:square.y+d*iy});\n        if (dir == 0 || Math.abs(ix+iy*3) == dir) v++;\n      }\n      if (b != \"-\") break;\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Outpost","group":"Pieces","text":"<b>$</b>. Outpost for knight or bishop.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"N\"\n   && board(pos, square.x, square.y) != \"B\") return 0;\n  if (!$outpost_square(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Outpost square","group":"Pieces","text":"<b>$</b>. Outpost squares for knight or bishop.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if ($rank(pos, square) < 4 || $rank(pos, square) > 6) return 0;\n  for (var y = 0; y < square.y; y++) {\n    if (board(pos, square.x - 1, y) == \"p\") return 0;\n    if (board(pos, square.x + 1, y) == \"p\") return 0;\n  }\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Reachable outpost","group":"Pieces","text":"<b>$</b>. Knights and bishops which can reach an outpost square in one move.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"B\"\n   && board(pos, square.x, square.y) != \"N\") return 0;\n  var v = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 2; y < 5; y++) {\n      if ((board(pos, square.x, square.y) == \"N\"\n        && \"PNBRQK\".indexOf(board(pos, x, y)) < 0\n        && $knight_attack(pos, {x:x,y:y}, square)\n        && $outpost_square(pos, {x:x,y:y}))\n       || (board(pos, square.x, square.y) == \"B\"\n        && \"PNBRQK\".indexOf(board(pos, x, y)) < 0\n        && $bishop_xray_attack(pos, {x:x,y:y}, square)\n        && $outpost_square(pos, {x:x,y:y}))) {\n        var support = board(pos, x - 1, y + 1) == \"P\" || board(pos, x + 1, y + 1) == \"P\" ? 2 : 1;\n        v = Math.max(v, support);\n      }\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Outpost bonus","group":"Pieces","text":"<b>$</b>. Middlegame bonuses for knights and bishops outposts, bigger if outpost piece is supported by a pawn.","code":"function $$(pos, square, mg) {\n  if (square == null) return sum(pos, $$);\n  var bishop = board(pos, square.x, square.y) == \"B\";\n  var knight = board(pos, square.x, square.y) == \"N\";\n  var reachable = 0, support = 0;\n  if (!bishop && !knight) return 0;\n  if (!$outpost(pos, square)) {\n    reachable = $reachable_outpost(pos, square);\n    if (!reachable) return 0;\n    support = reachable > 1;\n  } else {\n    support = (board(pos, square.x - 1, square.y + 1) == \"P\"\n           || board(pos, square.x + 1, square.y + 1) == \"P\");\n  }\n  var bonus = mg ? [[22,33],[9,14]] : [[6,9],[2,4]];\n  return bonus[bishop ? 1 : 0][support ? 1 : 0] * (reachable ? 1 : 2);\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Minor behind pawn","group":"Pieces","text":"<b>$</b>. Knight or bishop when behind a pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"B\"\n   && board(pos, square.x, square.y) != \"N\") return 0;\n  if ($rank(pos, square) > 4) return 0;\n  if (board(pos, square.x, square.y - 1).toUpperCase() != \"P\") return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Bishop pawns","group":"Pieces","text":"<b>$</b>. Number of pawns on the same color square as the bishop.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"B\") return 0;\n  var c = (square.x + square.y) % 2, v = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"P\" && c == (x + y) % 2) v++;\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Rook on pawn","group":"Pieces","text":"<b>$</b>. Rook aligned with enemy pawns on the same rank/file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"R\") return 0;\n  if ($rank(pos, square) < 5) return 0;\n  var v = 0;  \n  for (var x = 0; x < 8; x++) {\n    if (board(pos, x, square.y) == \"p\") v++;\n  }\n  for (var y = 0; y < 8; y++) {\n    if (board(pos, square.x, y) == \"p\") v++;\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Rook on file","group":"Pieces","text":"<b>$</b>. Rook when on an open or semi-open file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"R\") return 0;\n  var open = 1;\n  for (var y = 0; y < 8; y++) {\n    if (board(pos, square.x, y) == \"P\") return 0;\n    if (board(pos, square.x, y) == \"p\") open = 0;\n  }\n  return open + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Trapped rook","group":"Pieces","text":"<b>$</b>. Penalize rook when trapped by the king, even more if the king cannot castle.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"R\") return 0;\n  if ($rook_on_file(pos, square)) return 0;\n  var mob = $mobility(pos, square);\n  if (mob > 3) return 0;\n  var kx = 0, ky = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"K\") { kx = x; ky = y; }\n    }\n  }\n  if ((kx < 4) != (square.x < kx)) return 0;\n  if (ky != square.y && ky != 7) return 0;\n  for (var x = (square.x < kx ? 0 : kx + 1); x < (square.x < kx ? kx : 8); x++) {\n    var pawn = 0;\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"P\") pawn++;\n    }\n    if (!pawn) return 0;\n  }\n  return (92 - mob * 22) * (pos.c[0] || pos.c[1] ? 1 : 2);\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Weak queen","group":"Pieces","text":"<b>$</b>. Penalty if any relative pin or discovered attack against the queen.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"Q\") return 0;\n  for (var i = 0; i < 8; i++) {\n    var ix = (i + (i > 3)) % 3 - 1;\n    var iy = (((i + (i > 3)) / 3) << 0) - 1;\n    var count = 0;\n    for (var d = 1; d < 8; d++) {\n      var b = board(pos, square.x + d * ix, square.y + d * iy);\n      if (b == \"r\" && (ix == 0 || iy == 0) && count == 1) return 1;\n      if (b == \"b\" && (ix != 0 && iy != 0) && count == 1) return 1;\n      if (b != \"-\") count++;\n    }\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Pieces mg","group":"Pieces","text":"<b>$</b>. Middlegame bonuses and penalties to the pieces of a given color and type. Mobility not included here.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"NBRQ\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  var v = 0;\n  v += $outpost_bonus(pos, square, true);\n  v += 16 * $minor_behind_pawn(pos, square);\n  v -= 8 * $bishop_pawns(pos, square);\n  v += 8 * $rook_on_pawn(pos, square);\n  v += [0,20,45][$rook_on_file(pos, square)];\n  v -= $trapped_rook(pos, square);\n  v -= 50 * $weak_queen(pos, square);\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Pieces eg","group":"Pieces","text":"<b>$</b>. Endgame bonuses and penalties to the pieces of a given color and type. Mobility not included here.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"NBRQ\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  var v = 0;\n  v += $outpost_bonus(pos, square, false);\n  v -= 12 * $bishop_pawns(pos, square);\n  v += 24 * $rook_on_pawn(pos, square);\n  v += [0,7,20][$rook_on_file(pos, square)];\n  v -= 10 * $weak_queen(pos, square);\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Space area","group":"Space","text":"<b>$</b>. Number of safe squares available for minor pieces on the central four files on ranks 2 to 4. Safe squares one, two or three squares behind a friendly pawn are counted twice.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  var rank = $rank(pos, square);\n  var file = $file(pos, square);\n  if ((rank >= 2 && rank <= 4 && file >= 3 && file <= 6)\n   && (board(pos, square.x ,square.y) != \"P\")\n   && (board(pos, square.x - 1 ,square.y - 1) != \"p\")\n   && (board(pos, square.x + 1 ,square.y - 1) != \"p\")) {\n    if ($attack(pos, square) || !$attack(colorflip(pos), {x:square.x,y:7-square.y})) {\n      v++;\n      if (board(pos, square.x, square.y - 1) == \"P\"\n       || board(pos, square.x, square.y - 2) == \"P\"\n       || board(pos, square.x, square.y - 3) == \"P\") v++;\n    }\n  }   \n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Space","group":"Space","text":"<b>$</b> computes the space evaluation for a given side. The [[Space area]] bonus is multiplied by a weight: number of our pieces minus two times number of open files. The aim is to improve play on game opening.","code":"function $$(pos, square) {\n  if ($non_pawn_material(pos) + $non_pawn_material(colorflip(pos)) < 12222) return 0;\n  var weight = 0;\n  for (var x = 0; x < 8; x++) {\n    var open = true;\n    for (var y = 0; y < 8; y++) {\n      if (\"PNBRQK\".indexOf(board(pos, x, y)) >= 0) weight++;\n      if (board(pos, x, y).toUpperCase() == \"P\" ) open = false;\n    }\n    if (open) weight -= 2\n  }\n  return (Math.min(16, $space_area(pos)) * weight * weight / 18) << 0;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Pawn attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by pawn. Pins or en-passant attacks are not considered here.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x - 1, square.y + 1) == \"P\") return 1;\n  if (board(pos, square.x + 1, square.y + 1) == \"P\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"King attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  for (var i = 0; i < 8; i++) {\n    var ix = (i + (i > 3)) % 3 - 1;\n    var iy = (((i + (i > 3)) / 3) << 0) - 1;\n    if (board(pos, square.x + ix, square.y + iy) == \"K\") return 1;\n  }\n  \n \n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Attack","group":"Attack","text":"<b>$</b> counts number of attacks on square by all pieces. For bishop and rook x-ray attacks are included. For pawns pins or en-passant are ignored.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  v += $pawn_attack(pos, square);\n  v += $king_attack(pos, square);\n  v += $knight_attack(pos, square);\n  v += $bishop_xray_attack(pos, square);\n  v += $rook_xray_attack(pos, square);\n  v += $queen_attack(pos, square);\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Non pawn material","group":"Material","text":"<b>$</b>. Middlegame value of non-pawn material.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var a = [753, 826, 1285, 2513];\n  var i = \"NBRQ\".indexOf(board(pos, square.x, square.y));\n  if (i >= 0) return a[i];\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Loose enemies","group":"Threats","text":"<b>$</b>. Check if opponent has loose pawns or pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbr\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if ($attack(pos, square)) return 0;\n  if ($attack(colorflip(pos), {x:square.x,y:7-square.y})) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Safe pawn","group":"Threats","text":"<b>$</b>. Check if our pawn is not attacked or is defended.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if ($attack(pos, square)) return 1;\n  if (!$attack(colorflip(pos), {x:square.x,y:7-square.y})) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Threat safe pawn","group":"Threats","text":"<b>$</b>. Non-pawn enemies attacked by a [[Safe pawn]].","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"nbrq\".indexOf(board(pos, square.x, square.y));\n  if (\"nbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$pawn_attack(pos, square)) return 0;\n  if ($safe_pawn(pos, {x:square.x - 1, y:square.y + 1})\n   || $safe_pawn(pos, {x:square.x + 1, y:square.y + 1})) return type + 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Threat hanging pawn","group":"Threats","text":"<b>$</b>. Non-pawn enemies attacked by hanging pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"nbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$pawn_attack(pos, square)) return 0;\n  if (!$threat_safe_pawn(pos, square)) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Weak enemies","group":"Threats","text":"<b>$</b>. Enemies not defended by a pawn and under our attack.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrqk\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 0;\n  if (!$attack(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Minor threat","group":"Threats","text":"<b>$</b>. Threat type for knight and bishop attacking pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"pnbrq\".indexOf(board(pos, square.x, square.y));\n  if (type < 0) return 0;\n  if ((board(pos, square.x, square.y) == \"p\"\n       || (board(pos, square.x - 1, square.y - 1) != \"p\"\n        && board(pos, square.x + 1, square.y - 1) != \"p\"))\n    && !$weak_enemies(pos, square)) return 0;\n  if (!$knight_attack(pos, square) && !$bishop_xray_attack(pos, square)) return 0;\n  return type + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Rook threat","group":"Threats","text":"<b>$</b>. Threat type for attacked by rook pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"pnbrq\".indexOf(board(pos, square.x, square.y));\n  if (type < 0) return 0;\n  if (board(pos, square.x, square.y) != \"q\"\n    && !$weak_enemies(pos, square)) return 0;\n  if (!$rook_xray_attack(pos, square)) return 0;\n  return type + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Hanging","group":"Threats","text":"<b>$</b>. [[Weak enemies]] not defended by opponent.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$weak_enemies(pos, square)) return 0;\n  if ($attack(colorflip(pos), {x:square.x,y:7-square.y})) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"King threat","group":"Threats","text":"<b>$</b>. Threat by king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$weak_enemies(pos, square)) return 0;\n  if (!$king_attack(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Pawn push threat","group":"Threats","text":"<b>$</b>. Bonus if some pawns can safely push and attack an enemy piece.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrqk\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if ($pawn_attack(pos, square)) return 0;\n  for (var ix = -1; ix <= 1; ix += 2) {\n    if (board(pos, square.x + ix, square.y + 2) == \"P\"\n     && board(pos, square.x + ix, square.y + 1) == \"-\"\n     && board(pos, square.x + ix - 1, square.y) != \"p\"\n     && board(pos, square.x + ix + 1, square.y) != \"p\"\n     && ($attack(pos, {x:square.x+ix,y:square.y+1})\n         || !$attack(colorflip(pos),{x:square.x+ix,y:6-square.y}))\n     ) return 1;\n\n    if (square.y == 3\n     && board(pos, square.x + ix, square.y + 3) == \"P\"\n     && board(pos, square.x + ix, square.y + 2) == \"-\"\n     && board(pos, square.x + ix, square.y + 1) == \"-\"\n     && board(pos, square.x + ix - 1, square.y) != \"p\"\n     && board(pos, square.x + ix + 1, square.y) != \"p\"\n     && ($attack(pos, {x:square.x+ix,y:square.y+1})\n         || !$attack(colorflip(pos),{x:square.x+ix,y:6-square.y}))\n     ) return 1;\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Rank threat","group":"Threats","text":"<b>$</b>. Threat bonus depending on rank only applied if multiple threats from minors or rooks are present.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return (($minor_threat(pos, square) > 1)\n        + ($rook_threat(pos, square) > 1)) * square.y;\n\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Threats mg","group":"Threats","text":"<b>$</b>. Middlegame threats bonus.","code":"function $$(pos) {\n  var v = 0;\n  v += 71 * ($threat_hanging_pawn(pos) > 0);\n  v += 48 * $hanging(pos);\n  v += [0,3,9][Math.min($king_threat(pos), 2)];\n  v += 38 * $pawn_push_threat(pos);\n  v += 16 * $rank_threat(pos);\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      var s = {x:x,y:y};\n      v += [0,176,131,217,203][$threat_safe_pawn(pos, s)];\n      v += [0,0,45,46,72,48][$minor_threat(pos, s)];\n      v += [0,0,40,40,0,35][$rook_threat(pos, s)];\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"Threats eg","group":"Threats","text":"<b>$</b>. Endgame threats bonus.","code":"function $$(pos) {\n  var v = 0;\n  v += 25 * ($loose_enemies(pos) > 0);\n  v += 61 * ($threat_hanging_pawn(pos) > 0);\n  v += 27 * $hanging(pos);\n  v += [0,62,138][Math.min($king_threat(pos), 2)];\n  v += 22 * $pawn_push_threat(pos);\n  v += 3 * $rank_threat(pos);\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      var s = {x:x,y:y};\n      v += [0,139,127,218,215][$threat_safe_pawn(pos, s)];\n      v += [0,33,43,47,107,118][$minor_threat(pos, s)];\n      v += [0,25,62,59,34,48][$rook_threat(pos, s)];\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"Passed","group":"Passed pawns","text":"<b>$</b> checks if pawn is passed. Pawn is passed if there are no opposing pawns in front of it on the same file nor on an adjacent file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0 ; y < square.y; y++) {\n    if (board(pos, square.x - 1, y) == \"p\") return 0;\n    if (board(pos, square.x    , y) == \"p\") return 0;\n    if (board(pos, square.x + 1, y) == \"p\") return 0;\n    if (board(pos, square.x    , y) == \"P\") return 0;\n  }\n  return 1;\n}","links":[["https://en.wikipedia.org/wiki/Passed_pawn","Passed pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Hinder passed pawn","group":"Passed pawns","text":"<b>$</b> counts squares occupied or attacked by opponent in front of passed pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  var v = 0;\n  for (var y = 0 ; y < square.y; y++) {\n    if (\"pbnrqk\".indexOf(board(pos, square.x, y)) >= 0\n     || $attack(colorflip(pos), {x:square.x,y:7-y})) v++;\n  }\n  return v;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"King proximity","group":"Passed pawns","text":"<b>$</b> is endgame bonus based on the king's proximity. If block square is not the queening square then consider also a second push.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  var r = $rank(pos, square) - 2;\n  var rr = r * (r - 1);\n  var v = 0;\n  if (rr <= 0) return 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"k\") {\n        v += Math.max(Math.abs(y - square.y + 1),\n                      Math.abs(x - square.x)) * 5 * rr;\n      }\n      if (board(pos, x, y) == \"K\") {\n        v -= Math.max(Math.abs(y - square.y + 1),\n                      Math.abs(x - square.x)) * 2 * rr;\n        if (square.y < 6) {\n          v -= Math.max(Math.abs(y - square.y + 2),\n                      Math.abs(x - square.x))* rr;\n        }\n      }\n    }\n  }\n  return v;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Passed block","group":"Passed pawns","text":"<b>$</b> adds smaller bonus if passed pawn is blocked by our piece or bigger bonuses if it is free to advance. Bonus is adjusted based on attacked and defended status of block square and entire path in front of pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  if ($rank(pos, square) < 4) return 0;\n  var r = $rank(pos, square) - 2;\n  if (board(pos, square.x, square.y - 1) == \"-\") {\n    var pos2 = colorflip(pos);\n    var defended = 0, unsafe = 0, defended1 = 0, unsafe1 = 0;\n    for (var y = square.y - 1; y >= 0; y--) {\n      if ($attack(pos, {x:square.x,y:y})) defended++;\n      if (\"pnbrqk\".indexOf(board(pos, square.x, y)) >= 0\n       || $attack(pos2, {x:square.x,y:7-y})) unsafe++;\n      if (y == square.y - 1) {\n        defended1 = defended;\n        unsafe1 = unsafe;\n      }\n    }\n    for (var y = square.y + 1; y < 8; y++) {\n      if (board(pos, square.x, y) == \"R\"\n       || board(pos, square.x, y) == \"Q\") defended1 = defended = square.y;\n      if (board(pos, square.x, y) == \"r\"\n       || board(pos, square.x, y) == \"q\") unsafe1 = unsafe = square.y;\n      if (board(pos, square.x, y) != \"-\") break;\n    }\n    var k = (unsafe == 0 ? 18 : unsafe1 == 0 ? 8 : 0)\n          + (defended == square.y ? 6 : defended1 != 0 ? 4 : 0);\n    return k * (r * r - r);\n  } else if (\"PNBRQK\".indexOf(board(pos, square.x, square.y - 1)) >= 0) {\n    return r * r + r ;\n  }\n  return 0;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Passed unstoppable","group":"Passed pawns","text":"<b>$</b> assign a small bonus when the opponent has no pieces left","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  if ($non_pawn_material(colorflip(pos))) return 0;\n  return 1;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Passed file","group":"Passed pawns","text":"<b>$</b> is a bonus according to the file of a passed pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  var file = $file(pos, square);\n  return Math.min(file, 9 - file);\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Passed rank","group":"Passed pawns","text":"<b>$</b> is a bonus according to the rank of a passed pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  return $rank(pos, square) - 1;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Passed mg","group":"Passed pawns","text":"<b>$</b> middlegame bonuses for passed pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  var v = 0;\n  v -= 7 * $hinder_passed_pawn(pos, square);\n  v += [0,5,5,31,73,166,252][$passed_rank(pos, square)];\n  v += [0,9,2,1,-20][$passed_file(pos, square)];\n  v += $passed_block(pos, square);\n  return v;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Passed eg","group":"Passed pawns","text":"<b>$</b> endgame bonuses for passed pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$passed(pos, square)) return 0;\n  var v = 0;\n  v += $king_proximity(pos, square);\n  v += [0,7,14,38,73,166,252][$passed_rank(pos, square)];\n  v += [0,10,10,-8,-12][$passed_file(pos, square)];\n  v += $passed_block(pos, square);\n  v += 20 * $passed_unstoppable(pos, square);\n  return v;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Pawnless flank","group":"King","text":"<b>$</b>. Penalty when our king is on a pawnless flank.","code":"function $$(pos) {\n  var pawns=[0,0,0], kx = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y).toUpperCase() == \"P\") {\n        if (x < 4) pawns[0]++;\n        if (x > 1 && x < 6) pawns[1]++;\n        if (x > 3) pawns[2]++;\n     }\n      if (board(pos, x, y) == \"k\") kx = x < 3 ? 0 : x < 5 ? 1 : 2;\n    }\n  }\n  return pawns[kx] == 0 ? 1 : 0;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Weakness square","group":"King","text":"<b>$</b>. King shelter weakness for each square on board.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = -258;\n  var kx = Math.min(6, Math.max(1, square.x));\n  var weakness = [[100,20,10,46,82,86,98],\n                  [116,4,28,87,94,108,104],\n                  [109,1,59,87,62,91,116],\n                  [75,12,43,59,90,84,112]];\n  for (var x = kx - 1; x <= kx +1; x++) {\n    var us = 0;\n    for (var y = 7; y >= square.y; y--) {\n      if (board(pos, x, y) == \"p\") us = y;\n    }\n    var f = Math.min(x, 7 - x);\n    v += weakness[f][us] || 0;\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"Storm square","group":"King","text":"<b>$</b>. Enemy pawns storm for each square on board.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  var kx = Math.min(6, Math.max(1, square.x));\n  var danger = [\n    [[0,-290,-274,57,41],[0,60,144,39,13],[0,65,141,41,34],[0,53,127,56,14]],\n    [[4,73,132,46,31],[1,64,143,26,13],[1,47,110,44,24],[0,72,127,50,31]],\n    [[0,0,79,23,1],[0,0,148,27,2],[0,0,161,16,1],[0,0,171,22,15]],\n    [[22,45,104,62,6],[31,30,99,39,19],[23,29,96,41,15],[21,23,116,41,15]]];\n  for (var x = kx - 1; x <= kx +1; x++) {\n    var us = 0, them = 0;\n    for (var y = 7; y >= square.y; y--) {\n      if (board(pos, x, y) == \"p\") us = y;\n      if (board(pos, x, y) == \"P\") them = y;\n    }\n    var f = Math.min(x, 7 - x);\n    var type = x == square.x && them == 1 + square.y ? 0 :\n               us == 0 ? 1 :\n               them == us + 1 ? 2 : 3;\n    v += danger[type][f][them] || 0;\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"Shelter weakness","group":"King","text":"<b>$</b>. King shelter penalty for king position. If we can castle use the penalty after the castling if ([[Shelter weakness]] + [[Shelter storm]]) is smaller.","code":"function $$(pos) {\n  var w = 1024, s = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"k\"\n       || pos.c[2] && x == 6 && y == 0\n       || pos.c[3] && x == 2 && y == 0) {\n        var w1 = $weakness_square(pos, {x:x,y:y});\n        var s1 = $storm_square(pos, {x:x,y:y});\n        if (w1 + s1 < w + s) { w = w1; s = s1; }\n      }\n    }\n  }\n  return w;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Shelter storm","group":"King","text":"<b>$</b>. Shelter strom penalty for king position. If we can castle use the penalty after the castling if ([[Shelter weakness]] + [[Shelter storm]]) is smaller.","code":"function $$(pos) {\n  var w = 1024, s = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"k\"\n       || pos.c[2] && x == 6 && y == 0\n       || pos.c[3] && x == 2 && y == 0) {\n        var w1 = $weakness_square(pos, {x:x,y:y});\n        var s1 = $storm_square(pos, {x:x,y:y});\n        if (w1 + s1 < w + s) { w = w1; s = s1; }\n      }\n    }\n  }\n  return s;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"King danger","group":"King","text":"<b>$</b>. The initial value is based on the number and types of the enemy's attacking pieces, the number of attacked and undefended squares around our king and the quality of the pawn shelter.","code":"function $$(pos) {\n  if ($non_pawn_material(pos) < 2513) return 0;\n  var count = $king_attackers_count(pos);\n  if (count == 0) return 0;\n  var weight = $king_attackers_weight(pos);\n  var zone = $king_zone_attacks(pos);\n  var undefended = $undefended_count(pos);\n  var ring = $undefended_ring(pos) + ($pinned(colorflip(pos)) > 0 ? 1 : 0);\n  var noqueen = ($queen_count(pos) > 0 ? 0 : 1);\n  var v = Math.min(807, count * weight)\n        + 101 * zone\n        + 235 * undefended\n        + 134 * ring\n        - 717 * noqueen\n        - ((7 * (-$shelter_weakness(pos) - $shelter_storm(pos)) / 5) << 0)\n        - 5\n        + 997 * ($queen_contact_check(pos) > 0 ? 1 : 0)\n        + 745 * ($safe_check(pos, null, 3) > 0 ? 1 : 0)\n        + 688 * ($safe_check(pos, null, 2) > 0 ? 1 : 0)\n        + 588 * ($safe_check(pos, null, 1) > 0 ? 1 : 0)\n        + 924 * ($safe_check(pos, null, 0) > 0 ? 1 : 0);\n  if (v > 0) return Math.min((v * v / 4096) << 0,  1652);\n  return 0;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"King pawn distance","group":"King","text":"<b>$</b>. Minimal distance of our king to our pawns.","code":"function $$(pos) {\n  var v = 8, kx = 0, ky = 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"K\") {\n        kx = x;\n        ky = y;\n      }\n    }\n  }\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      var dist = Math.max(Math.abs(x-kx),Math.abs(y-ky)) - 1;\n      if (board(pos, x, y) == \"P\" && dist < v) v = dist;\n    }\n  }\n  return v == 8 ? 0 : v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Close enemies","group":"King","text":"<b>$</b>. King tropism: firstly, find squares that opponent attacks in our king flank. Secondly, add the squares which are attacked twice in that flank and which are not defended by our pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (square.y > 4) return 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"k\") {\n        kx = x < 3 ? 0 : x < 5 ? 1 : 2;\n        if (x < 3 && square.x > 3) return 0;\n        if (x >= 3 && x < 5 && (square.x < 2 || square.x > 5)) return 0;\n        if (x >= 5 && square.x < 4) return 0;\n      }\n    }\n  }\n  var a = $attack(pos, square);\n  if (!a) return 0;\n  if (a > 1 && board(pos, square.x - 1, square.y - 1) != \"p\" && board(pos, square.x + 1, square.y - 1) != \"p\") return 2;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Check","group":"King","text":"<b>$</b>. Possible checks by knight, bishop, rook or queen.","code":"function $$(pos, square, type) {\n  if (square == null) return sum(pos, $$);\n  if ($rook_xray_attack(pos, square)\n  && (type == null || type == 2)\n   || $queen_attack(pos, square)\n  && (type == null || type == 3)) {\n    for (var i = 0; i < 4; i++) {\n      var ix = (i == 0 ? -1 : i == 1 ? 1 : 0);\n      var iy = (i == 2 ? -1 : i == 3 ? 1 : 0);\n      for (var d = 1; d < 8; d++) {\n        var b = board(pos, square.x + d * ix, square.y + d * iy);\n        if (b == \"k\") return 1;\n        if (b != \"-\") break;\n      }\n    }\n  }\n  if ($bishop_xray_attack(pos, square)\n  && (type == null || type == 1)\n   || $queen_attack(pos, square)\n  && (type == null || type == 3)) {\n    for (var i = 0; i < 4; i++) {\n      var ix = ((i > 1) * 2 - 1);\n      var iy = ((i % 2 == 0) * 2 - 1);\n      for (var d = 1; d < 8; d++) {\n        var b = board(pos, square.x + d * ix, square.y + d * iy);\n        if (b == \"k\") return 1;\n        if (b != \"-\") break;\n      }\n    }\n  }\n  if ($knight_attack(pos, square)\n  && (type == null || type == 0)) {\n    if (board(pos, square.x + 2, square.y + 1) == \"k\"\n     || board(pos, square.x + 2, square.y - 1) == \"k\"\n     || board(pos, square.x + 1, square.y + 2) == \"k\"\n     || board(pos, square.x + 1, square.y - 2) == \"k\"\n     || board(pos, square.x - 2, square.y + 1) == \"k\"\n     || board(pos, square.x - 2, square.y - 1) == \"k\"\n     || board(pos, square.x - 1, square.y + 2) == \"k\"\n     || board(pos, square.x - 1, square.y - 2) == \"k\") return 1;\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Other check","group":"King","text":"<b>$</b>. Some other potential checks, only requiring the square to be safe from pawn-attacks, and not being occupied by a blocked pawn.","code":"function $$(pos, square, type) {\n  if (square == null) return sum(pos, $$, type);\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x, square.y) == \"P\"\n   && board(pos, square.x, square.y - 1).toUpperCase() == \"P\" ) return 0;\n  if (type == null) {\n    if (!$check(pos, square, 0)\n     && !$check(pos, square, 1)\n     && !$check(pos, square, 2)) return 0;\n  } else {\n    if (!$check(pos, square, type)) return 0;\n  }\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Safe check","group":"King","text":"<b>$</b>. Analyse the safe enemy's checks which are possible on next move.","code":"function $$(pos, square, type) {\n  if (square == null) return sum(pos, $$, type);\n  if (!$check(pos, square, type)) return 0;\n  var pos2 = colorflip(pos);\n  if (!$attack(pos2, {x:square.x,y:7-square.y})\n   && \"PNBRQK\".indexOf(board(pos, square.x, square.y)) < 0) return 1;\n  if (($check(pos, square, 0)\n    || $check(pos, square, 1)\n    || $check(pos, square, 2))\n   && type != 3\n   && $attack(pos, square) > 1\n   && $queen_attack(pos2, {x:square.x,y:7-square.y})\n   && $attack(pos2, {x:square.x,y:7-square.y}) < 2\n   && \"PNBRQK\".indexOf(board(pos, square.x, square.y)) < 0) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Queen count","group":"Helpers","text":"<b>$</b> counts number of our queens.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) == \"Q\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"King attackers count","group":"King","text":"<b>$</b> is the number of pieces of the given color which attack a square in the kingRing of the enemy king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"PNBRQ\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      for (var ix = -1; ix <= 1; ix++) {\n        for (var iy = -2; iy <= 1; iy++) {\n          if (board(pos, x + ix, y + iy) == \"k\") {\n            var s2 = {x:x,y:y};\n            if ($knight_attack(pos, s2, square)\n             || $bishop_xray_attack(pos, s2, square)\n             || $rook_xray_attack(pos, s2, square)\n             || $queen_attack(pos, s2, square)) return 1;\n            if (iy >= -1\n             && board(pos, square.x, square.y) == \"P\"\n             && Math.abs(s2.x - square.x) == 1\n             && square.y - s2.y == 1) return 1;\n          }\n        }\n      }\n    }\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"King attackers weight","group":"King","text":"<b>$</b> is the sum of the \"weights\" of the pieces of the given color which attack a square in the kingRing of the enemy king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if ($king_attackers_count(pos, square)) {\n    return [0,78,56,45,11][\"PNBRQ\".indexOf(board(pos, square.x, square.y))];\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"King zone attacks","group":"King","text":"<b>$</b> is the number of attacks by the given color to squares directly adjacent to the enemy king. Pieces which attack more than one square are counted multiple times. For instance, if there is a white knight on g5 and black's king is on g8, this white knight adds 2.","code":"function $$(pos, square) {\n  if ($non_pawn_material(pos) < 2513) return 0;\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  for (var ix = -1; ix <= 1; ix++) {\n    for (var iy = -1; iy <= 1; iy++) {\n      if (board(pos, square.x + ix, square.y + iy) == \"k\") {\n        v += $knight_attack(pos, square);\n        v += $bishop_xray_attack(pos, square);\n        v += $rook_xray_attack(pos, square);\n        v += $queen_attack(pos, square);\n      }\n    }\n  }\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Undefended count","group":"King","text":"<b>$</b>. Find the attacked squares which are defended only by the king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if ($attack(pos, square)) {\n    var pos2 = colorflip(pos);\n    if ($king_attack(pos2, {x:square.x,y:7-square.y})\n     && $attack(pos2, {x:square.x,y:7-square.y}) < 2) return 1;\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Undefended ring","group":"King","text":"<b>$</b>. Find the attacked squares which are not defended at all in the larger king ring.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if ($attack(pos, square)) {\n    if ((\"PNBRQK\".indexOf(board(pos, square.x, square.y)) < 0)\n     && (board(pos, square.x - 1, square.y - 2) == \"k\"\n      || board(pos, square.x    , square.y - 2) == \"k\"\n      || board(pos, square.x + 1, square.y - 2) == \"k\")\n     && $attack(colorflip(pos), {x:square.x,y:7-square.y}) == 0) return 1;\n  }\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Queen contact check","group":"King","text":"<b>$</b>.  Analyse the enemy's safe queen contact checks. Firstly, find the undefended squares around the king reachable by the enemy queen and keep squares supported by another enemy piece.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$undefended_count(pos, square)) return 0;\n  if (!$queen_attack(pos, square)) return 0;\n  if (\"PNBRQK\".indexOf(board(pos, square.x, square.y)) >= 0) return 0;\n  if ($attack(pos, square) < 2) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Initiative","group":"Initiative","text":"<b>$</b> computes the initiative correction value for the position, i.e., second order bonus/malus based on the known attacking/defending status of the players.","code":"function $$(pos, square) {\n  var pawns = 0, asymmetry = 0, kx = [0, 0], ky = [0, 0];\n  for (var x = 0; x < 8; x++) {\n    var open = [0, 0];\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y).toUpperCase() == \"P\" ) {\n        open[board(pos, x, y) == \"P\" ? 0 : 1] = 1;\n        pawns++\n      }\n      if (board(pos, x, y).toUpperCase() == \"K\" ) {\n        kx[board(pos, x, y) == \"K\" ? 0 : 1] = x;\n        ky[board(pos, x, y) == \"K\" ? 0 : 1] = y;\n      }\n    }\n    if (open[0] + open[1] == 1) asymmetry++;\n  }\n  var kingDistance = Math.abs(kx[0] - kx[1]) - Math.abs(ky[0] - ky[1]);\n  return 8 * (asymmetry + kingDistance - 15) + 12 * pawns;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":true});
+data.push({"name":"Other check total","group":"King","text":"<b>$</b>. Unsafe checks which are possible on next move only requiring the square to be safe from pawn-attacks, and not being occupied by a blocked pawn. For knights, bishops and rooks. We add bonus per piece type.\n","code":"function $$(pos) {\n  if ($non_pawn_material(pos) < 2513) return 0;\n  var v = 0;\n  v += ($safe_check(pos, null, 0) == 0 && $other_check(pos, null, 0) > 0 ? 1 : 0);\n  v += ($safe_check(pos, null, 1) == 0 && $other_check(pos, null, 1) > 0 ? 1 : 0);\n  v += ($safe_check(pos, null, 2) == 0 && $other_check(pos, null, 2) > 0 ? 1 : 0);\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Tempo","group":"","text":"<b>$</b>. In chess, tempo refers to a \"turn\" or single move. When a player achieves a desired result in one fewer move, the player \"gains a tempo\"; and conversely when a player takes one more move than necessary, the player \"loses a tempo\". We add small bonus for having the right to move.","code":"function $$(pos, square) {\n  return 20 * (pos.w ? 1 : -1);\n}","links":[["https://en.wikipedia.org/wiki/Tempo_(chess)","Tempo (chess) in wikipedia"],["https://chessprogramming.wikispaces.com/Tempo","Tempo in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false});
+data.push({"name":"Pawn count","group":"Helpers","text":"<b>$</b> counts number of our pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) == \"P\") return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Opposite bishops","group":"Helpers","text":"<b>$</b> determines if we have bishops of opposite colors.","code":"function $$(pos) {\n  if ($bishop_count(pos) != 1) return 0;\n  if ($bishop_count(colorflip(pos)) != 1) return 0;\n  var color = [0, 0];\n  for (var x = 0; x < 8; x++) {\n    for (var y = 0; y < 8; y++) {\n      if (board(pos, x, y) == \"B\") color[0] = (x + y) % 2;\n      if (board(pos, x, y) == \"b\") color[1] = (x + y) % 2;\n    }\n  }\n  return color[0] == color[1] ? 0 : 1;\n}","links":[["https://chessprogramming.wikispaces.com/Bishops+of+Opposite+Colors","Bishops of Opposite Colors in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false});
+data.push({"name":"King mg","group":"King","text":"<b>$</b> assigns middlegame bonuses and penalties for attacks on enemy king.","code":"function $$(pos) {\n  var v = 0;\n  v += $shelter_weakness(pos);\n  v += $shelter_storm(pos);\n  v += $king_danger(pos);\n  v += 10 * $other_check_total(pos);\n  v += 7 * $close_enemies(pos);\n  v += 20 * $pawnless_flank(pos);\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true,"graph":false});
+data.push({"name":"King eg","group":"King","text":"<b>$</b> assigns endgame bonuses and penalties for attacks on enemy king.","code":"function $$(pos) {\n  var v = 0;\n  v -= 16 * $king_pawn_distance(pos);\n  v += 10 * $other_check_total(pos);\n  v += 80 * $pawnless_flank(pos);\n  return v;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":true});
+data.push({"name":"Imbalance total","group":"Imbalance","text":"<b>$</b>. Second-degree polynomial material imbalance by Tord Romstad.","code":"function $$(pos, square) {\n  var v = 0;\n  v += $imbalance(pos) - $imbalance(colorflip(pos));\n  v += $bishop_pair(pos) - $bishop_pair(colorflip(pos));\n  return (v / 16) << 0;\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false});
+data.push({"name":"Connected bonus","group":"Pawns","text":"<b>$</b> is bonus for connected pawns.","code":"function $$(pos, square, mg) {\n  if (square == null) return sum(pos, $$);\n  if (!$connected(pos, square)) return 0;\n  var seed = [0, 8, 19, 13, 71, 94, 169, 324];\n  var op = $opposed(pos, square);\n  var ph = $phalanx(pos, square);\n  var ap = $supported(pos, square) > 1 ? 1 : 0;\n  var r = $rank(pos, square);\n  if (r < 2 || r > 7) return 0;\n  var v = seed[r - 1];\n  v += (ph ? (seed[r] - seed[r - 1]) >> 1 : 0);\n  v >>= op;\n  v += (ap ? v >> 1 : 0);\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Pawns mg","group":"Pawns","text":"<b>$</b> is middlegame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  v -= [0,45,30][$isolated(pos, square)?1+$opposed(pos, square):0];\n  v -= $unsupported(pos, square) ? 17 : 0;\n  v -= [0,56,41][$backward(pos, square)?1+$opposed(pos, square):0];\n  v -= $doubled(pos, square) ? 18 : 0;\n  v += [0,0,0,0,0,17,33,0,0][$lever(pos, square) ? $rank(pos, square) : 0];\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) : 0;\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Pawns eg","group":"Pawns","text":"<b>$</b> is endgame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  v -= [0,40,27][$isolated(pos, square)?1+$opposed(pos, square):0];\n  v -= $unsupported(pos, square) ? 8 : 0;\n  v -= [0,33,19][$backward(pos, square)?1+$opposed(pos, square):0];\n  v -= $doubled(pos, square) ? 38 : 0;;\n  v += [0,0,0,0,0,16,32,0,0][$lever(pos, square) ? $rank(pos, square) : 0];\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) * ($rank(pos, square) - 3) / 4 << 0 : 0;\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Mobility mg","group":"Mobility","text":"<b>$</b>. [[Mobility bonus]] for middlegame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $mobility_bonus(pos, square, true);\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Mobility eg","group":"Mobility","text":"<b>$</b>. [[Mobility bonus]] for endgame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $mobility_bonus(pos, square, false);\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
+data.push({"name":"Piece value bonus","group":"Material","text":"<b>$</b>. Material values for middlegame and engame.","code":"function $$(pos, square, mg) {\n  if (square == null) return sum(pos, $$);\n  var a = mg ? [188, 753, 826, 1285, 2513]\n             : [248, 832, 897, 1371, 2650];\n  var i = \"PNBRQ\".indexOf(board(pos, square.x, square.y));\n  if (i >= 0) return a[i];\n  return 0;\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Psqt bonus","group":"Material","text":"<b>$</b>. Piece square table bonuses. For each piece type on a given square a (middlegame, endgame) score pair is assigned.","code":"function $$(pos, square, mg) {\n  if (square == null) return sum(pos, $$, mg);\n  var bonus = mg ? [\n    [[0,0,0,0],[-11,6,7,3],[-18,-2,19,24],[-17,-9,20,35],[-6,5,3,21],[-6,-8,-6,-2],[-4,20,-8,-4],[0,0,0,0]],\n    [[-143,-96,-80,-73],[-83,-43,-21,-10],[-71,-22,0,9],[-25,18,43,47],[-26,16,38,50],[-11,37,56,71],[-62,-17,5,14],[-195,-66,-42,-29]],\n    [[-54,-23,-35,-44],[-30,10,2,-9],[-19,17,11,1],[-21,18,11,0],[-21,14,6,-1],[-27,6,2,-8],[-33,7,-4,-12],[-45,-21,-29,-39]],\n    [[-25,-16,-16,-9],[-21,-8,-3,0],[-21,-9,-4,2],[-22,-6,-1,2],[-22,-7,0,1],[-21,-7,0,2],[-12,4,8,12],[-23,-15,-11,-5]],\n    [[0,-3,-4,-1],[-4,6,9,8],[-2,6,9,9],[-1,8,10,7],[-3,9,8,7],[-2,6,8,10],[-2,7,7,6],[-1,-4,-1,0]],\n    [[260,313,263,188],[258,298,232,174],[195,240,171,105],[173,181,144,106],[146,174,112,63],[116,157,82,39],[85,127,62,17],[63,89,47,0]]\n  ] : [\n    [[0,0,0,0],[7,-4,8,-2],[-4,-5,5,4],[3,3,-8,-3],[8,9,7,-6],[8,-5,2,4],[3,-9,1,18],[0,0,0,0]],\n    [[-97,-82,-46,-14],[-69,-55,-17,9],[-50,-39,-8,28],[-41,-25,7,38],[-46,-25,2,41],[-55,-38,-8,27],[-64,-50,-24,13],[-110,-90,-50,-13]],\n    [[-68,-40,-46,-28],[-43,-17,-23,-5],[-32,-9,-13,8],[-36,-13,-15,7],[-36,-14,-17,3],[-35,-13,-10,1],[-44,-21,-22,-4],[-65,-42,-46,-27]],\n    [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],\n    [[-70,-57,-41,-29],[-58,-30,-21,-4],[-39,-17,-7,5],[-29,-5,9,17],[-27,-5,10,23],[-40,-16,-11,3],[-54,-30,-21,-7],[-75,-54,-44,-30]],\n    [[0,48,75,84],[42,91,142,131],[81,136,167,163],[103,166,166,176],[104,159,196,199],[90,150,171,169],[44,93,114,133],[2,48,73,83]]\n  ];\n  var i = \"PNBRQK\".indexOf(board(pos, square.x, square.y));\n  if (i < 0) return 0;\n  return bonus[i][7 - square.y][Math.min(square.x, 7 - square.x)];\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":true,"graph":true});
+data.push({"name":"Piece value mg","group":"Material","text":"<b>$</b>. Material - middlegame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $piece_value_bonus(pos, square, true);\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Piece value eg","group":"Material","text":"<b>$</b>. Material - endgame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $piece_value_bonus(pos, square, false);\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Psqt mg","group":"Material","text":"<b>$</b>. Piece square table bonuses - middlegame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $psqt_bonus(pos, square, true);\n}","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Psqt eg","group":"Material","text":"<b>$</b>. Piece square table bonuses - endgame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $psqt_bonus(pos, square, false);\n}\n\n","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
+data.push({"name":"Initiative total","group":"Initiative","text":"<b>$</b>. No description available.","code":"function $$(pos, v) {\n  if (v == null) v = $end_game_evaluation(pos, true);\n  return (v > 0 ? 1 : v < 0 ? -1 : 0)\n         * Math.max($initiative(pos), -Math.abs((v / 2) << 0));\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":false,"graph":false});
+</script> 
+
+
+
+</body></html>
