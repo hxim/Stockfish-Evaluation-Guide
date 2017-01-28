@@ -290,27 +290,36 @@
             }
             #thumbbuttons {
                 position: absolute;
-                top: -20px;
-                line-height: 20px;
-                height: 20px;
+                top: -22px;
+                line-height: 18px;
+                height: 18px;
                 width: 272px;
             }
             #thumbbuttons div {
                 display: inline-block;
                 text-align: center;
-                color: #cccccc;
+                color: #222222;
                 cursor: default;
                 vertical-align: center;
-                line-height: 20px;
+                line-height: 18px;
                 user-select: none;
                 -moz-user-select: -moz-none;
+                border-radius: 2px;
+                border: solid 1px #a2a9b1;
+                background-color: #f8f9fa;
+                margin-right: 2px;
+                padding: 0 5px 0 5px;
             }
-            #thumbbuttons .on, #thumbbuttons .off {
-                width: 20px;
-                
+            #buttonback, #buttonforward {
+                font-size: 16px;
+            }
+
+            #thumbbuttons .off {
+                color: #777777;
             }
             #thumbbuttons .on:hover {
-                color: #000000;
+                background-color: #ffffff;
+                color: #222222;
                 cursor: pointer;
             }
 
@@ -651,14 +660,19 @@
                 }
 
                     div#leftmenu div.group h3 {
+                        color: #0645ad;
                         font-size: 0.75em;
-                        color: #4d4d4d;
-                        font-weight: normal;
+                        font-weight: bold;
                         margin: 0;
                         padding: 0.25em 0 0.25em 0.25em;
                         cursor: default;
                         border: none;
                     }
+                    div#leftmenu div.group h3:hover {
+                        text-decoration: underline;
+                        cursor: pointer;
+                    }
+                    
 
                     div#leftmenu div.group div.body {
                         margin: 0 0 0 1.25em;
@@ -770,7 +784,7 @@
         </div>
         <div id="bodyContent" style="">
             <div id="thumb" class="thumb tright" style="">
-                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);">◁</div><div id="buttonforward" class="off" onclick="historymove(+1,event);">▷</div></div>
+                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">⏪</div><div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">⏩</div></div>
                 <div class="thumbinner">
                 <table class="cbTable" cellspacing="0" cellpadding="0">
                 <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
@@ -894,7 +908,7 @@
                 </div>
                 <div id="searchWrapper">
                     <form id="simpleSearch" onsubmit="dosearch();return false;">
-                        <input name="search" placeholder="Search or enter position FEN" id="searchInput" type="search"><input name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchButton" type="submit">
+                        <input name="search" placeholder="Search or enter FEN or PGN" id="searchInput" type="search"><input name="go" value="Go" title="Go to a page with this exact name if it exists" id="searchButton" type="submit">
                     </form>
                 </div>
             </div>
@@ -1065,29 +1079,28 @@ function refreshTable(pos) {
   evaltable += "</table>";
   document.getElementById('evalTable').innerHTML = evaltable;
 }
-
-function dosearch() {
-  var text = document.getElementById('searchInput').value;
-  document.getElementById('searchInput').value = "";
+function command(text) {
   if (text.split("/").length == 8 && text.split(".").length == 1) {
     document.getElementById('fen').innerHTML = text;
     _history = [document.getElementById('fen').innerHTML]; _historyindex = 0;
     historymove(0);
   } else if (text.split(".").length > 1) {
-      text = " " + text.replace(/(\[FEN [^\]]+\])+?/g, function ($0, $1) { return $1.replace(/\[|\]|"/g,"").replace(/\s/g,"."); });
+      text = " " + text.replace(/\./g," ").replace(/(\[FEN [^\]]+\])+?/g, function ($0, $1) { return $1.replace(/\[|\]|"/g,"").replace(/\s/g,"."); });
       text = text.replace(/\[Event /g, "* [Event ").replace(/\s(\[[^\]]+\])+?/g, "").replace(/(\{[^\}]+\})+?/g, "");
       var r = /(\([^\(\)]+\))+?/g; while (r.test(text)) text = text.replace(r, "");
-      text = text.replace(/\s\d+\.+/g, " ").replace(/\.\.\./g, "")
-                 .replace(/\$\d+/g, "").replace(/0-0-0/g, "O-O-O").replace(/0-0/g, "O-O").replace(/\?/g,"");
-      var moves = text.replace(/\s/g, " ").replace(/  +/g, " ").trim().split(' ');
+      text = text.replace(/0-0-0/g, "O-O-O").replace(/0-0/g, "O-O").replace(/(1\-0|0\-1|1\/2\-1\/2)/g," * ")
+                 .replace(/\s\d+/g, " ").replace(/\$\d+/g, "").replace(/\?/g,"");
+      var moves = text.replace(/\s/g, " ").replace(/ +/g, " ").trim().split(' ');
       var init = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
       var pos = parseFEN(init);
-      _history = [init]; _historyindex = 0;
+      _history = [init]; _historyindex = 0; gm=0;
       for (var i = 0; i < moves.length; i++) {
-        if ("*01".indexOf(moves[i][0]) >= 0) {
+        if (moves[i].length == 0) continue;
+        if ("*".indexOf(moves[i][0]) == 0) {
           if (i < moves.length - 1) {
             pos = parseFEN(init);
             historyadd(generateFEN(pos));
+            gm++;
           }
           continue;
         } else if (moves[i].indexOf("FEN.") == 0) {
@@ -1098,7 +1111,7 @@ function dosearch() {
         }
         if (moves[i] == "--") { pos.w = !pos.w; historyadd(generateFEN(pos)); continue; }
         var move = parseMove(pos, moves[i]);
-        if (move == null) { alert("incorrect move: "+moves[i]); break; }
+        if (move == null) { alert("incorrect move: "+moves[i] + " "+ gm); break; }
         pos = doMove(pos, move.from, move.to, move.p);
         historyadd(generateFEN(pos));
       }
@@ -1118,6 +1131,11 @@ function dosearch() {
     editmode(0);
     showPage(text.toLowerCase().replace(/ /g, "_"), true);
   }
+}
+function dosearch() {
+  var text = document.getElementById('searchInput').value;
+  document.getElementById('searchInput').value = "";
+  command(text);
 }
 function editmode(edit) {
   document.getElementById('liRead').className = edit != 1 ? "selected" : "";
@@ -1156,7 +1174,7 @@ function editmode(edit) {
     for (var i = 1; i < 8; i++) s += ",\n           " + JSON.stringify(pos.b[i]);
     s += "],\n\n       // castling rights\n       c: " + JSON.stringify(pos.c) + "\n\n       // enpassant\n";
     s += "       e: " + JSON.stringify(pos.e) + "\n\n       // side to move\n"
-    s += "       w: " + JSON.stringify(pos.w) + "       m: " + JSON.stringify(pos.m) + "}\n";
+    s += "       w: " + JSON.stringify(pos.w) + "\n\n       // move counts\n       m: " + JSON.stringify(pos.m) + "}\n";
     document.getElementById('codeGlobalPos').innerHTML = s;
     document.getElementById('codeGlobalFunc').innerHTML = board + "\n" + colorflip + "\n" + sum;
   }
@@ -1448,7 +1466,10 @@ function showBoard() {
     }
   }
   document.getElementById('thumb').style.display = data[showindex].eval ? "" : "none";
-  var whiteEvalString = data[showindex].name + (data[showindex].forwhite ? " (white)" : "") +  " = <b>" + cureval + "</b>";
+  var evalInPawns = data[showindex].name == "Main evaluation"
+                 || data[showindex].name == "Middle game evaluation"
+                 || data[showindex].name == "End game evaluation" ? " (" + (cureval / 248).toFixed(2) + ")" : "";
+  var whiteEvalString = data[showindex].name + (data[showindex].forwhite ? " (white)" : "") +  " = <b>" + cureval + evalInPawns+ "</b>";
   var blackEvalString = data[showindex].forwhite ? data[showindex].name +  " (black) = <b>" + curevalflip + "</b><br/>" : "";
   var totalEvalString = data[showindex].forwhite ? data[showindex].name + " (total) = <b>" + (cureval - curevalflip) + "</b>" : "";
   document.getElementById('thumbcaption').innerHTML = whiteEvalString + (data[showindex].forwhite ? "<br/>" : "") + blackEvalString + totalEvalString;
@@ -1717,7 +1738,7 @@ function isLegal(pos, from, to) {
 }
 function parseMove(pos, s) {
   var promotion = null;
-  s = s.replace(/[\+|#|\?|x]/g,"");
+  s = s.replace(/[\+|#|\?|!|x]/g,"");
   if (s.length >= 2 && s[s.length - 2] == "=") {
     promotion = s[s.length - 1]
     s = s.substring(0, s.length - 2);
@@ -1757,13 +1778,18 @@ function parseMove(pos, s) {
 }
 
 var _history = [], _historyindex = -1;
+function historybuttons() {
+  document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
+  document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";
+  document.getElementById('buttonback').innerHTML = "&#9194;";
+  document.getElementById('buttonforward').innerHTML = "&#9193;";
+}
 function historyadd(fen) {
   if (_historyindex >= 0 && _history[_historyindex] == fen) return;
   _historyindex++;
   _history.length = _historyindex;
   _history.push(fen);
-  document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
-  document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";
+  historybuttons();
 }
 function historymove(v, e) {
   if (e == null) e = window.event;
@@ -1772,8 +1798,7 @@ function historymove(v, e) {
   if (_historyindex + v >= 0 && _historyindex + v < _history.length) _historyindex += v;
   if (e != null && e.ctrlKey && Math.abs(v) == 1) _historyindex = v == 1 ? _history.length - 1 : 0;
   document.getElementById('fen').innerHTML = _history[_historyindex];
-  document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
-  document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";  
+  historybuttons();
   showBoard();
 }
 
@@ -1882,17 +1907,17 @@ function chessboardOnDblClick(e) {
 window.onload = function () {
   showMenu();
   doEval();
-  showPage(getParameterByName("p").toLowerCase());
+  curindex = 0;
+  updatePage();
   editmode(0);
+  historyadd(document.getElementById('fen').innerHTML);
+  command(getParameterByName("p"));
   document.onmousedown = onMouseDown;
   document.onmouseup = onMouseUp;
   document.getElementById('chessboard1').ondblclick = chessboardOnDblClick;  
-  historyadd(document.getElementById('fen').innerHTML);
 }
-
-
-    </script>
-    <script id="loadData">var data = [], curindex = null;
+</script>
+<script id="loadData">var data = [], curindex = null;
 data.push({"name":"Main evaluation","group":"","text":"<b>$</b>. An evaluation function is used to heuristically determine the relative value of a positions used in general case when no specialized evaluation or tablebase evaluation is available. In Stockfish it is never applied for positions where king of either side is in check. Resulting value is computed by combining [[Middle game evaluation]] and [[End game evaluation]]. We use <a class=\"external\" href=\"https://chessprogramming.wikispaces.com/Tapered+Eval\">Tapered Eval</a>, a technique used in evaluation to make a smooth transition between the phases of the game. [[Phase]] is a coeficient of simple linear combination. Before using  [[End game evaluation]] in this formula we also scale it down using [[Scale factor]].","code":"function $$(pos) {\n  var mg = $middle_game_evaluation(pos);\n  var eg = $end_game_evaluation(pos);\n  var p = $phase(pos), t = $tempo(pos);\n  eg = eg * $scale_factor(pos, eg) / 64;\n  return ((((mg * p + eg * (128 - p)) << 0) / 128) << 0) + t;\n}","links":[["https://chessprogramming.wikispaces.com/Evaluation","Evaluation in cpw"],["https://chessprogramming.wikispaces.com/Tapered+Eval","Tapered Eval in cpw"],["https://chessprogramming.wikispaces.com/Game+Phases","Game Phases in cpw"],["https://chessprogramming.wikispaces.com/Tempo","Tempo in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false});
 data.push({"name":"Isolated","group":"Pawns","text":"<b>$</b> checks if pawn is isolated. In chess, an isolated pawn is a pawn which has no friendly pawn on an adjacent file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0 ; y < 8; y++) {\n    if (board(pos, square.x - 1, y) == \"P\") return 0;\n    if (board(pos, square.x + 1, y) == \"P\") return 0;\n  }\n  return 1;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true});
 data.push({"name":"Opposed","group":"Pawns","text":"<b>$</b> flag is set if there is opponent opposing pawn on the same file to prevent it from advancing.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0; y < square.y; y++) {\n    if (board(pos, square.x, y) == \"p\") return 1;\n  }\n  return 0;\n}","links":[["https://chessprogramming.wikispaces.com/Evaluation","Evaluation"],["https://chessprogramming.wikispaces.com/Tapered+Eval","Tapered Eval"],["https://chessprogramming.wikispaces.com/Game+Phases","Game Phases"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":false});
@@ -1999,7 +2024,5 @@ data.push({"name":"Psqt mg","group":"Material","text":"<b>$</b>. Piece square ta
 data.push({"name":"Psqt eg","group":"Material","text":"<b>$</b>. Piece square table bonuses - endgame.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return $psqt_bonus(pos, square, false);\n}\n\n","links":[],"eval":true,"squares":1,"highlight":0,"forwhite":true});
 data.push({"name":"Initiative total","group":"Initiative","text":"<b>$</b>. No description available.","code":"function $$(pos, v) {\n  if (v == null) v = $end_game_evaluation(pos, true);\n  return (v > 0 ? 1 : v < 0 ? -1 : 0)\n         * Math.max($initiative(pos), -Math.abs((v / 2) << 0));\n}","links":[],"eval":false,"squares":0,"highlight":0,"forwhite":false,"graph":false});
 </script> 
-
-
 
 </body></html>
