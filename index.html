@@ -114,6 +114,7 @@
             .cb > .h1:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd0000; border-radius:10px;}
             .cb > .h2:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd00dd; border-radius:10px;}
             .cb > .h1.h2:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #dd6600; border-radius:10px; }
+            .cb > .h3:before { content: ""; background-color: transparent; display: block; width: 22px; height: 22px; border: 3px solid #00dd00; border-radius:10px;}
             .cb > .k { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAADlklEQVRIie2VX0gjdxDHPxvramw9zNKoscoJNYlaqMUnX2JR2ggVi39o8aVFfSqCos8WQYriP4RA8eFQHyL0oRDFmtZYpKjUiIiIhyCYksY/wVC9KDExGrzdPtx66GmOBto+lH5h2NnZme/szG92Fv7Hv4hGVf5RPAH2VHmSSKCQYCIt0Krqo0D0rwa+kWCi50Cxql8nGJsQ5oGwKvN/B6EGeBd4DCSptlLgGaCo8ky1AbwFvAdI8QjvtS45OfnL+vr6b0tKSjSCILC+vq7Mz89PRSKRX24lRdWrMzMz7dXV1Y+Li4s10WhUWV5ePltYWPgMWOUV55fIysr6yOl0fi9JknZubk48Pj4WKyoqxOHh4fdjsdjHGxsbMpAKoNFo5K6urg9tNpvh4OBAdLvdyScnJ2JbW9sjq9X6hdPp/FGW5cCD5bW3t/tHRkZuWvNSJElSHA6HMjY2JguCoCQlJSkOh0MeHR1VtFrtHV9BEJTJyUmlu7s7+OpZ3CClrKzs7enp6XsvEAwGaWhoIBaLCT09PQwNDbG7uyu0trYSjd6dcEVRsNvt5Ofnv3nbfvuMrk5PTxWdTvdgtWrFRCIRrq+vSU9Pj+uXm5vLwcFBLK5DeXn5D0tLS7IoivfadyN+v185PDyM+1yv1yubm5vPjUbjN7e57wzD3t7eT3q9/qu+vr5Ul8slhMNhACRJoqSkhNLSUkRRxOv1EgqF0Gg0hEIhFEUBoLCwkNnZWWVwcPD3paWlzwH5hvuhFZTZ2Ni4PjAwkDszM6OxWCxcXFywvb2Nz+cjHA6TlpaGTqejqKgIs9nM1tYWR0dHVFVVyZ2dnWsul8vKi4+a1yUCEHt7e0OBQCDFbrcjyzImkwlJksjIyCAajXJ+fo7X68Xv92OxWOjv77/u6Oj4bm1trUlt4x3EXao5OTmelpaWgtraWgCePn2Kz+fj6uoKAIPBgNlspqCggNXVVSYmJs4WFxdrgF8f4ou7VDs6OjICgQBWq5VIJILRaCQ7O5vU1FQuLy+5uLjA4/EQDAaprKykvb1dK8vyo+Xl5Qf54lak1+s9zc3NBXV1daSkpLCzs8P+/j5nZ2dotVr0ej0mk4m8vDxWVlYYHx8/dbvdn8arKC5sNtteV1dX1GAwxB1lQBFFUampqYlNTU0pTU1NHySU5BY+AX4GjoE/1OspLzb3zb0H+BrIeB1RIn/YdwCDShhVE/4GxN8A/2n8CeU5f/bTrmMxAAAAAElFTkSuQmCC);}
             .cb > .q { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAADPklEQVRIie2VX0hbVxzHP/fmz4YpQmpuvEwRXGOlD00fhJpBahXcWlci1JdQ7INU+tCnvpS9byDMMXzuwBfZs4KBIWNsBENhCgWxLYMIMxRLYkxTa4mlmntvH/KLObuaVQZ72n7w45zzvb/f9/s753cOF/63f8k+A74ENFlfAJ4BT4HzgmkSE/unIiOAI/5AsO8UbFqwrxTsWjMyXZlfB2aBK7L+VPkWkfEXwAKqMgc4p8TV51eE63O34BngrVRVBjyCLQjWpcRui9etS2IWJMcDvBJsHwioQh8BL+VjnkZPooJdUmJL4nW7JDFRWWtAQbCXwn10dO+Aq1KJqZC0ynhfxo+lYo/M1W+tSl67cF0V7mN2Syq5K+s48JracfqBy8qOLgtWlpi45NwVjlsqsdcl9BjYA74FfgJ8wKGMN6XSeuUxoFt2V4/5RHL3hKupacAutVv1K3BDKnaA34EUjaucEqx+gW5ITlU4ND5gTyR5F/hRqquTVRShilLEnsTuyvrJh0QAHipkDvBGxgMXrmJvXPhDN6nuBqgdhy0kUHsbDo1+2uJQ64sjMSjCj9yk7ssA8IcU4Pf7/cRiMQYGBjTTNAmHw4TDYR2gWCxSLBbJ5/Pa8vIyKysrHBwc+IVjzU16YsN8Pt8PqVTqTk9Pj3d1dZV0Os3GxgY7OzuUSrW3ahgGhmEQiUQYHBykv7+fbDZbHR0dnT08PLx3KiFAj0QiLzo7O02v96RNH7dqtUoulyvkcrkOGkd7ZM1YbJ/PNz0+Pv69bdue0wjpum7NzMxMnyTyt3nJZLKYSCScYDDovmnHPBgMOolEwpmcnMw3I2y2o9ulUikwNjbG1NQUlmWRzWb/0qNQKIRhGPT29qJpGplMhvn5+VZqv5c/3YQn9mh4ePjniYmJLxYXF0mn01iWRUdHB6FQiPb2dmzbPhLd2trC6/UyNDREMpm0U6nU13Nzc9+cSsgwjJ6+vr5HIyMjbfF4XAsEAmxubtr5fN4ql8s2QFtbm26apqe7u1uvVCpkMhlnaWmptLa2dnF7e7t4KiHF/EB/S0vLUDQaPW+aZpeu62cBbNsuFwqF5+vr69n9/f3fgFUaj/w/YO8B4Y42ZltnDwoAAAAASUVORK5CYII=);}
             .cb > .r { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAABmJLR0QA/wD/AP+gvaeTAAABfklEQVRIie2VMWvCQBTHfwkFrSUqUjCETiKZWtRFKA39HJ07+Ql0c+ikfoMu/TDFUuhaugSnUJCitJpYqovXwYNqmsQoDg7+4JHj3d37v8vdvYMD+44S0XcJnAA/wJP0nQO6bPeBN9m+Ao6Bb+B5kwRywAQYyG8VKABD6RvIdkH2LY/NbSJ0KgMJYCyz7wOf0ieAryX/SPqGcu4/jsKUTNPUNE0DSEvzk/U7PM/TbNsOjBcm5JqmOUmlUlmZ6VqEEOp0OvVs23aD+qMOQyKdTj+22+2qqqqRIvP5nEaj8eK67jUwi5OYnxsWGyzW2ESODSU61R1yENp/odALC5BIJDKWZSUVJeoWgBAi2e12M7NZ+MmOFNJ1vWYYRpxVq/l8vuY4zv02Qs1yuVwyDANiVIdKpVJyHKcJ3MVIbIUW6y+q31phwYJ+fh54KBaLF/V6/YyYtQ5QOp3Oe6/XewVugY91Eyz+yv42NpIxVgjaozGLYz+KuRI/Cot36cBu+AVUmoiF2EIn/gAAAABJRU5ErkJggg==);}
@@ -800,7 +801,7 @@
         </div>
         <div id="bodyContent" style="">
             <div id="thumb" class="thumb tright" style="">
-                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">⏪</div><div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">⏩</div><div id="buttonstm" class="on white" onclick="command('sidetomove');" title="white to move">w</div></div>
+                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">⏴</div><div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">⏵</div><div id="buttonstm" class="on white" onclick="command('sidetomove');" title="white to move">w</div></div>
                 <div class="thumbinner">
                 <table class="cbTable" cellspacing="0" cellpadding="0">
                 <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
@@ -1416,6 +1417,18 @@ function showPage(name, search) {
     }
   }
 }
+function showLegalMoves(from) {
+  var pos = parseFEN(document.getElementById('fen').innerHTML);
+  var elem = document.getElementById('chessboard1');
+  for (var i=0; i<elem.children.length; i++) {
+    var div = elem.children[i];
+    if (div.tagName != 'DIV') continue;
+    var x = parseInt(div.style.left.replace("px","")) / 28;
+    var y = parseInt(div.style.top.replace("px","")) / 28;
+    div.className = div.className.split(' ')[0] + " " + div.className.split(' ')[1];
+    if (isLegal(pos, from, {x:x,y:y})) div.className += " h3";
+  }
+}
 function showBoard() {
   var showindex = document.getElementById('bodyContentTable').style.display == ""
                || document.getElementById('bodyContentGraph').style.display == "" ? 0 : curindex;
@@ -1459,11 +1472,9 @@ function showBoard() {
       }
       catch (e) {}    
     }
-    
     if (data[showindex].highlight > 0 && func != null) {
       if (sqeval != 0) div.className += " h1";
-    
-      if (data[showindex].highlight > 1 && data[showindex].forwhite) {
+       if (data[showindex].highlight > 1 && data[showindex].forwhite) {
         if (sqevalblack != 0) div.className += " h2";
       }
     }
@@ -1800,8 +1811,8 @@ var _history = [], _historyindex = -1;
 function historybuttons() {
   document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
   document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";
-  document.getElementById('buttonback').innerHTML = "&#9194;";
-  document.getElementById('buttonforward').innerHTML = "&#9193;";
+  document.getElementById('buttonback').innerHTML = "&#9204;";
+  document.getElementById('buttonforward').innerHTML = "&#9205;";
 }
 function historyadd(fen) {
   if (_historyindex >= 0 && _history[_historyindex] == fen) return;
@@ -1857,8 +1868,15 @@ function onMouseMove(e) {
     _dragElement.style.zIndex = 10000;
     document.getElementById('chessboard1').appendChild(_dragElement);
     _dragActive = true;
+    
+    var w = _dragElement.getBoundingClientRect().width;
+    var h = _dragElement.getBoundingClientRect().height;
+    var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + w / 2;
+    var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + h / 2;
+    var x1 = Math.round((_startX - offsetX) / w);
+    var y1 = Math.round((_startY - offsetY) / h);    
+    showLegalMoves({x:x1,y:y1});
   }
-
   var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + _dragElement.getBoundingClientRect().width / 2;
   var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + _dragElement.getBoundingClientRect().height / 2;
   _dragElement.style.left = (e.clientX - offsetX) + 'px';
