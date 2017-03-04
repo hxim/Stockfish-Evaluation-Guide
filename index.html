@@ -932,7 +932,7 @@
         </div>
         <div id="leftmenu"></div>
     </div>
-    <div id="footer"><ul><li> This page was last modified on <span id="date">25 February 2017</span>.</li></ul><div style="clear:both"></div></div>
+    <div id="footer"><ul><li> This page was last modified on <span id="date">2 March 2017</span>.</li></ul><div style="clear:both"></div></div>
 <script>
 
 function ctrlMessage(e, message) {
@@ -1871,9 +1871,11 @@ function historymove(v, e) {
   showBoard();
 }
 
-var _dragElement = null, _dragActive = false, _startX, _startY, _dragCtrl;
+var _dragElement = null, _dragActive = false, _startX, _startY, _dragCtrl, _longPressTimer = null;
 function onMouseDown(e, button) {
-
+  clearTimeout(_longPressTimer);
+  _longPressTimer = window.setTimeout(function() { dragActivate(); _longPressTimer = null; }, 1000);
+  if (_dragElement != null) return true;
   if (e == null) e = window.event;
   var elem = target = e.target != null ? e.target : e.srcElement;
   while (target != null && target.id != 'chessboard1' && target.tagName != 'BODY') {
@@ -1894,11 +1896,8 @@ function onMouseDown(e, button) {
 
 }
 
-function onMouseMove(e) {
-  if (_dragElement == null) return;
-  if (e == null) e = window.event;
-  if (!_dragActive) {
-    if (Math.abs(e.clientX - _startX) < 4 && Math.abs(e.clientY - _startY) < 4) return;
+function dragActivate() {
+    clearTimeout(_longPressTimer);
     var clone = _dragElement.cloneNode();
     if (!_dragCtrl) _dragElement.className = _dragElement.className[0] + " -";
     _dragElement = clone;
@@ -1915,6 +1914,14 @@ function onMouseMove(e) {
     var x1 = Math.round((_startX - offsetX) / w);
     var y1 = Math.round((_startY - offsetY) / h);    
     showLegalMoves({x:x1,y:y1});
+}
+
+function onMouseMove(e) {
+  if (_dragElement == null) return;
+  if (e == null) e = window.event;
+  if (!_dragActive) {
+    if (Math.abs(e.clientX - _startX) < 4 && Math.abs(e.clientY - _startY) < 4) return;
+    dragActivate();
   }
   var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + _dragElement.getBoundingClientRect().width / 2;
   var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + _dragElement.getBoundingClientRect().height / 2;
@@ -1923,6 +1930,10 @@ function onMouseMove(e) {
 }
 
 function onMouseUp(e) {
+  onMouseMove(e);
+  if (_longPressTimer) {
+    clearTimeout(_longPressTimer);
+  } else if (_dragElement != null) return false;
   if (_dragElement != null) {
     if (_dragActive) {
       var w = _dragElement.getBoundingClientRect().width;
@@ -2040,8 +2051,8 @@ data.push({"name":"Non pawn material","group":"Material","text":"<b>$</b>. Middl
 data.push({"name":"Safe pawn","group":"Threats","text":"<b>$</b>. Check if our pawn is not attacked or is defended.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if ($attack(pos, square)) return 1;\n  if (!$attack(colorflip(pos), {x:square.x,y:7-square.y})) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
 data.push({"name":"Threat safe pawn","group":"Threats","text":"<b>$</b>. Non-pawn enemies attacked by a [[Safe pawn]].","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"nbrq\".indexOf(board(pos, square.x, square.y));\n  if (\"nbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$pawn_attack(pos, square)) return 0;\n  if ($safe_pawn(pos, {x:square.x - 1, y:square.y + 1})\n   || $safe_pawn(pos, {x:square.x + 1, y:square.y + 1})) return type + 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
 data.push({"name":"Threat hanging pawn","group":"Threats","text":"<b>$</b>. Non-pawn enemies attacked by hanging pawn.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"nbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$pawn_attack(pos, square)) return 0;\n  if (!$threat_safe_pawn(pos, square)) return 1;\n  return 0;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
-data.push({"name":"Weak enemies","group":"Threats","text":"<b>$</b>. Enemies not defended by a pawn and under our attack.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrqk\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 0;\n  if (!$attack(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true});
-data.push({"name":"Minor threat","group":"Threats","text":"<b>$</b>. Threat type for knight and bishop attacking pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"pnbrq\".indexOf(board(pos, square.x, square.y));\n  if (type < 0) return 0;\n  if ((board(pos, square.x, square.y) == \"p\"\n       || (board(pos, square.x - 1, square.y - 1) != \"p\"\n        && board(pos, square.x + 1, square.y - 1) != \"p\"))\n    && !$weak_enemies(pos, square)) return 0;\n  if (!$knight_attack(pos, square) && !$bishop_xray_attack(pos, square)) return 0;\n  return type + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
+data.push({"name":"Weak enemies","group":"Threats","text":"<b>$</b>. Enemies not defended by a pawn and under our attack.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrqk\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (board(pos, square.x - 1, square.y - 1) == \"p\") return 0;\n  if (board(pos, square.x + 1, square.y - 1) == \"p\") return 0;\n  if (!$attack(pos, square)) return 0;\n  if ($attack(pos, square) <= 1\n   && $attack(colorflip(pos),{x:square.x,y:7-square.y}) > 1) return 0\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false});
+data.push({"name":"Minor threat","group":"Threats","text":"<b>$</b>. Threat type for knight and bishop attacking pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"pnbrq\".indexOf(board(pos, square.x, square.y));\n  if (type < 0) return 0;\n  if (!$knight_attack(pos, square) && !$bishop_xray_attack(pos, square)) return 0;\n  if ((board(pos, square.x, square.y) == \"p\"\n       || !(board(pos, square.x - 1, square.y - 1) == \"p\"\n         || board(pos, square.x + 1, square.y - 1) == \"p\"\n         || ($attack(pos, square) <= 1 && $attack(colorflip(pos),{x:square.x,y:7-square.y}) > 1)))\n    && !$weak_enemies(pos, square)) return 0;\n  return type + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
 data.push({"name":"Rook threat","group":"Threats","text":"<b>$</b>. Threat type for attacked by rook pieces.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var type = \"pnbrq\".indexOf(board(pos, square.x, square.y));\n  if (type < 0) return 0;\n  if (board(pos, square.x, square.y) != \"q\"\n    && !$weak_enemies(pos, square)) return 0;\n  if (!$rook_xray_attack(pos, square)) return 0;\n  return type + 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
 data.push({"name":"Hanging","group":"Threats","text":"<b>$</b>. [[Weak enemies]] not defended by opponent.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (!$weak_enemies(pos, square)) return 0;\n  if ($attack(colorflip(pos), {x:square.x,y:7-square.y})) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
 data.push({"name":"King threat","group":"Threats","text":"<b>$</b>. Threat by king.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (\"pnbrq\".indexOf(board(pos, square.x, square.y)) < 0) return 0;\n  if (!$weak_enemies(pos, square)) return 0;\n  if (!$king_attack(pos, square)) return 0;\n  return 1;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":true});
