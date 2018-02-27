@@ -1134,13 +1134,24 @@ function graph2cb(elem, index) {
   }
   adjustGraph2();
 }
+function graph2custom() {
+  var funccode = prompt("Please enter your function", "$middle_game_evaluation(pos)");
+  if (funccode == null || funccode.length == 0) return;
+  for (var i = 0; i < Math.min(_graph2data.length, _history.length); i++) {
+    var pos = parseFEN(_history[i]);
+    var result = 0;
+    try { eval("result = (" + funccode + ")"); }
+    catch (e) {}       
+    _graph2data[i].push({group:"Custom",elem:funccode,item:[null, null, result],hidden:false});
+  }
+  adjustGraph2();
+}
 function adjustGraph2() {
   if (_graph2data == null) return;
   var full = _graph2data.length >= _history.length;
   var pawn = 240, yscale = 2, len = _graph2data.length;
   for (var j = 0; j < len; j++)  
-    for (var i = 0; i < _graph2data[j].length; i++)
-    {
+    for (var i = 0; i < _graph2data[j].length; i++) {
       if (_graph2data[j][i].hidden) continue;
       while (Math.abs(_graph2data[j][i].item[2]) >= yscale * pawn) yscale++;
     }
@@ -1168,10 +1179,13 @@ function adjustGraph2() {
       if (full) {
         var color = "background: linear-gradient(rgb("+(c1)+", "+(c2)+", "+(c3)+
                                              "), rgb("+(c1*0.75 << 0)+", "+(c2*0.8 << 0)+", "+(c3*0.9 << 0)+"));";
-        var title = _history[j] + "\n"
-                  + _graph2data[j][i].elem[0].toUpperCase()+_graph2data[j][i].elem.replace(/\_/g," ").substring(1) + "\n"
-                  + "MG=" + _graph2data[j][i].item[0] + "\nEG=" + _graph2data[j][i].item[1] + "\nTOTAL=" +  _graph2data[j][i].item[2];
-        var clickscript = "if (event==null) event=window.event;if (event.ctrlKey) {editmode(0);showPage('"+_graph2data[j][i].elem+"');} else {_graph2keep=true;historymove("+(j)+"-_historyindex);_graph2keep=false;}";
+        var title = _history[j] + "\n";
+        title += _graph2data[j][i].group == "Custom" ? _graph2data[j][i].elem : _graph2data[j][i].elem[0].toUpperCase()+_graph2data[j][i].elem.replace(/\_/g," ").substring(1);
+        if (_graph2data[j][i].item[0] != null) title += "\nMG=" + _graph2data[j][i].item[0];
+        if (_graph2data[j][i].item[1] != null) title += "\nEG=" + _graph2data[j][i].item[1];
+        title += "\nTOTAL=" +  _graph2data[j][i].item[2];
+        var pagescript = _graph2data[j][i].group == "Custom" ? "" : "editmode(0);showPage('"+_graph2data[j][i].elem+"');";
+        var clickscript = "if (event==null) event=window.event;if (event.ctrlKey) {"+pagescript+"} else {_graph2keep=true;historymove("+(j)+"-_historyindex);_graph2keep=false;}";
 
         gDataPoints += "<div class=\"point\" style=\"top:"+(254-v-3)+"px;left:"+(41+j*17-3)+"px;"+color+"\" title=\""+title+"\" onclick=\""+clickscript+"\"></div>";
       }
@@ -1183,6 +1197,7 @@ function adjustGraph2() {
   }
   checkboxes += "<label style=\"background-color:rgba(255,255,255,0.8);color:black;\" onclick=\"graph2cb(this,-1);\"><span>Show all</span></label>";
   checkboxes += "<label style=\"background-color:rgba(0,0,0,0.8);color:white;\" onclick=\"graph2cb(this,-2);\"><span>Hide all</span></label>";
+  checkboxes += "<label style=\"background: linear-gradient(rgb(255,0,0), rgb(255,255,0));color:black;\" onclick=\"graph2custom();\"><span>Add custom...</span></label>";
   document.getElementById('graphData').innerHTML = "<div class=\"graph2\" style=\"width:"+(len*17+39)+"px\">"
     + "<div class=\"background\"></div>"
     + "<svg style='width: 100%; height: 100%;' class='shadow'>"+gDataSvg+"</svg>"
@@ -1194,7 +1209,12 @@ function refreshGraph2() {
   var fnc = function() {
     if (_graph2data == null) return;
     var i = _graph2data.length;
-    _graph2data.push(getGraphGroupList(parseFEN(_history[i])));
+    var data = getGraphGroupList(parseFEN(_history[i]));
+    var total = 0;
+    for (var j = 0; j < data.length; j++) total += data[j].item[2];
+    data.push({group:"Custom",elem:"total",item:[null, null, total],hidden:false});
+    _graph2data.push(data);
+
     if (i % 8 == 0 || _graph2data.length >= _history.length) adjustGraph2();
     if (_graph2data.length >= _history.length || _graph2data.length != i + 1) return;
     window.setTimeout(fnc, 0);
