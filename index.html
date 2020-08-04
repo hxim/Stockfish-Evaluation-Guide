@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html><head>
     <meta charset="UTF-8">
     <title>Stockfish Evaluation Guide</title>
@@ -520,7 +520,7 @@
                 list-style-image: url(data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%3F%3E%0A%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%225%22%20height%3D%2213%22%3E%0A%3Ccircle%20cx%3D%222.5%22%20cy%3D%229.5%22%20r%3D%222.5%22%20fill%3D%22%2300528c%22%2F%3E%0A%3C%2Fsvg%3E%0A);
             }
 
-            #bodyContent, #bodyContentGlobal, #bodyContentTable, #bodyContentGraph {
+            #bodyContent, #bodyContentGlobal, #bodyContentTable, #bodyContentGraph, #bodyContentNNUE {
                 position: relative;
                 line-height: 1.6;
                 font-size: 0.875em;
@@ -894,6 +894,21 @@
                 right: 1em;
             }
         }
+        #nnueAct .neuron {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            border-radius: 4px;
+            border: 1px solid black;
+            margin: 0 1px 1px 0;
+            font-size: 11px;
+            line-height: 18px;
+            vertical-align: middle;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        #nnueAct .layer { width: 672px; line-height: 0; margin-bottom: 18px; }
     </style>
 </head>
 <body>
@@ -1001,7 +1016,37 @@
                 <a onclick="refreshGraph2();">Show game history graph</a>
                 <div id="graphData"></div>
             </div>
-        </div>        
+        </div>
+        <div id="bodyContentNNUE" style="display: none;">
+            <div class="contentText">
+                <p>Stockfish NNUE is a port of a shogi neural network named NNUE (efficiently updateable neural network backwards) to Stockfish 11. In this tool only halfkp_256x2-32-32 architecture is currently supported.</p>
+                <h2><span>Neural network</span></h2>
+                <p>To use NNUE evaluation load supported neural network here: <input type="file" accept=".nnue" onchange="nnueFileLoad(event)"></p>
+                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><br><b>Architecture:</b> <span id="nnueInfoArch">-</span>
+                </p>
+                <div>
+                <div style="float:left;max-width:550px;margin-right:1.5em;"><h2><span>Per square value estimation</span></h2>
+                <p>This table shows how much NNUE evaluation in pawns changes after piece is removed from chessboard.</p>
+                <div id="thumb4" class="thumb tleft" style="display: none;">
+                <div class="thumbinner">
+                <table class="cbTable" cellspacing="0" cellpadding="0">
+                <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                <tr><td>8</td><td colspan="8" rowspan="8" class="cbCell"><div id="chessboard4" class="cb"></div></td><td>8</td></tr>
+                <tr><td>7</td><td>7</td></tr><tr><td>6</td><td>6</td></tr><tr><td>5</td><td>5</td></tr><tr><td>4</td><td>4</td></tr>
+                <tr><td>3</td><td>3</td></tr><tr><td>2</td><td>2</td></tr><tr><td>1</td><td>1</td></tr>
+                <tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
+                </tbody></table>
+                </div>
+                </div>
+                </div>
+                <div style="float:left;">
+                <h2><span>Neuron activation</span></h2>
+                <div id="nnueAct"></div>
+                </div>
+                <div style="clear:both"></div>
+                </div>
+            </div>
+        </div>   
     </div>
     <div>
         <div id="head">
@@ -1020,6 +1065,7 @@
                         <li id="liGlobal" class=""><span><a onclick="editmode(2);">Global functions</a></span></li>
                         <li id="liTable" class=""><span><a onclick="editmode(3);">Table</a></span></li>
                         <li id="liGraph" class=""><span><a onclick="editmode(4);">Graph</a></span></li>
+                        <li id="liNNUE" class=""><span><a onclick="editmode(5);" style="font-weight:bold;color:#f34b7d;">NNUE</a></span></li>
                     </ul>
                 </div>
             </div>
@@ -1088,7 +1134,7 @@ function getGraphGroupList(pos) {
       catch (e) {
         alert(e.message);
         continue;
-      }   
+      }
       var evals = [mw - mb, ew - eb];
       var index = grouplist.map(function(e) { return e.elem; }).indexOf(n2);
       if (index < 0) {
@@ -1103,7 +1149,7 @@ function getGraphGroupList(pos) {
   grouplist.sort(function(a,b) {return (a.group > b.group) ? 1 : ((b.group > a.group) ? -1 : 0);} );
   maincode = maincode.replace("function $$(pos)","function $$(PMG,PEG)")
                      .replace("$middle_game_evaluation(pos)","PMG")
-                     .replace("$end_game_evaluation(pos)","PEG")  
+                     .replace("$end_game_evaluation(pos)","PEG");
   var mainfunc = eval("(" + maincode + ")");
   for (var i = 0; i < grouplist.length; i++) {
     grouplist[i].item.push(mainfunc(grouplist[i].item[0], grouplist[i].item[1]) - mainfunc(0, 0));
@@ -1235,7 +1281,13 @@ function adjustGraph2(nofilter) {
     var j = len2 == 0 ? 0 : datafilt[j2];
     for (var i = 0; i < _graph2data[j].length; i++) {
       var c1 = (22 + (i % 4) * 72), c2 = (22 + ((((i / 4) << 0)+1) % 4) * 72), c3 = (22 + (((i / 16) << 0) % 3) * 109), light=2*c1+7*c2+c3>1024;
-      if (j2==0) checkboxes += "<label style=\"background-color:rgba("+c1+","+c2+","+c3+",0.8);color:"+(light?"black":"white")+"\"><input type=\"checkbox\" "+(_graph2data[j][i].hidden?"":"checked")+" onclick=\"graph2cb(this,"+i+");\"><span>"+_graph2data[j][i].elem[0].toUpperCase()+_graph2data[j][i].elem.replace(/\_/g," ").substring(1)+"</span></label>";
+      if (_graph2data[j][i].elem == "total") { c1 = 131; c2 = 165; c3 = 210; light = true; }
+      else if (_graph2data[j][i].elem == "NNUE") { c1 = 243; c2 = 75; c3 = 125; light = true; }
+      if (j2==0) {
+        var text = _graph2data[j][i].elem[0].toUpperCase()+_graph2data[j][i].elem.replace(/\_/g," ").substring(1);
+        if (_graph2data[j][i].elem == "NNUE") text = text.toUpperCase();
+        checkboxes += "<label style=\"background-color:rgba("+c1+","+c2+","+c3+",0.8);color:"+(light?"black":"white")+"\"><input type=\"checkbox\" "+(_graph2data[j][i].hidden?"":"checked")+" onclick=\"graph2cb(this,"+i+");\"><span>"+text+"</span></label>";
+      }
 
       if (i == 0 && (j == 0 || _graph2data[j][i].mc != _graph2data[j-1][i].mc && lastx != j2 - 1)) {
         gDataPoints += "<div class=\"xlabel\" style=\"left:" + (j2*17+24) + "px\">"+(_graph2data[j][i].mc)+"</div>";
@@ -1280,12 +1332,18 @@ function refreshGraph2() {
   var fnc = function() {
     if (_graph2data == null) return;
     var i = _graph2data.length;
-    var data = getGraphGroupList(parseFEN(_history[i]));
+    var pos = parseFEN(_history[i]);
+    var data = getGraphGroupList(pos);
     var total = 0;
     for (var j = 0; j < data.length; j++) total += data[j].item[2];
     data.push({group:"Custom",elem:"total",item:[null, null, total],hidden:false,mc:data[0].mc});
-    _graph2data.push(data);
-
+    if (typeof _nnue_network !== 'undefined' && _nnue_network != null) {
+      var result = 0;
+      try { eval("result = (nnueEvaluate(pos))"); }
+      catch (e) {}    
+      data.push({group:"Custom",elem:"NNUE",item:[null, null, result],hidden:false,mc:data[0].mc});
+    }
+   _graph2data.push(data);
     if (i % 8 == 0 || _graph2data.length >= _history.length) adjustGraph2(true);
     if (_graph2data.length >= _history.length || _graph2data.length != i + 1) return;
     window.setTimeout(fnc, 0);
@@ -1392,6 +1450,8 @@ function command(text) {
   } else if (text.toLowerCase() == "sidetomove") {
     document.getElementById('fen').innerHTML = document.getElementById('fen').innerHTML.replace(" w ", " ! ").replace(" b ", " w ").replace(" ! ", " b ");
     showBoard();
+  } else if (text.toLowerCase() == "nnue") {
+    editmode(5);
   } else if (text.toLowerCase() == "bench") {
     var list = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
@@ -1450,6 +1510,7 @@ function editmode(edit) {
   document.getElementById('liGlobal').className = edit == 2 ? "selected" : "";
   document.getElementById('liTable').className = edit == 3 ? "selected" : "";
   document.getElementById('liGraph').className = edit == 4 ? "selected" : "";
+  document.getElementById('liNNUE').className = edit == 5 ? "selected" : "";
   
   document.getElementById('info').style.display = edit != 1 ? "" : "none";
   document.getElementById('bodyContent').style.display = edit == 0 ? "" : "none";
@@ -1457,6 +1518,7 @@ function editmode(edit) {
   document.getElementById('bodyContentGlobal').style.display = edit == 2 ? "" : "none";
   document.getElementById('bodyContentTable').style.display = edit == 3 ? "" : "none";
   document.getElementById('bodyContentGraph').style.display = edit == 4 ? "" : "none";
+  document.getElementById('bodyContentNNUE').style.display = edit == 5 ? "" : "none";
   if (edit == 1) {
     document.getElementById('editName').value = data[curindex].name;
     document.getElementById('editGroup').value = data[curindex].group;
@@ -1482,7 +1544,8 @@ function editmode(edit) {
   }
   document.getElementById('headline').innerHTML = edit == 2 ? "Global functions" :
                                                   edit == 3 ? "Table" :
-                                                  edit == 4 ? "Graph" : data[curindex].name ;
+                                                  edit == 4 ? "Graph" :
+                                                  edit == 5 ? "NNUE" : data[curindex].name ;
   if (edit == 2) {
     var pos = parseFEN(document.getElementById('fen').innerHTML);
     var s = "pos = {// chessboard\n       b: [" + JSON.stringify(pos.b[0]);
@@ -1494,10 +1557,11 @@ function editmode(edit) {
     document.getElementById('codeGlobalFunc').innerHTML = board + "\n" + colorflip + "\n" + sum;
   }
   var targetContent = edit == 3 ? 'bodyContentTable' :
-                      edit == 4 ? 'bodyContentGraph' : 'bodyContent';
+                      edit == 4 ? 'bodyContentGraph' :
+                      edit == 5 ? 'bodyContentNNUE' :'bodyContent';
   var t = document.getElementById('thumb'), p = document.getElementById(targetContent);
   p.insertBefore(t, p.children[0]);
-  if (edit == 0 || edit == 3 || edit == 4) showBoard();
+  if (edit == 0 || edit == 3 || edit == 4 || edit == 5) showBoard();
 }
 
 function apply() {
@@ -1591,6 +1655,7 @@ function save() {
   document.getElementById('chessboard1').innerHTML = "";
   document.getElementById('chessboard2').innerHTML = "";
   document.getElementById('chessboard3').innerHTML = "";
+  document.getElementById('chessboard4').innerHTML = "";
   document.getElementById('thumbcaption').innerHTML = "";
   document.getElementById('thumbcaption2').innerHTML = "";
   document.getElementById('thumbcaption3').innerHTML = "";
@@ -1600,6 +1665,10 @@ function save() {
   document.getElementById("codeGlobalFunc").innerHTML = "";
   document.getElementById("evalTable").innerHTML = "";
   document.getElementById("graphData").innerHTML = "";
+  document.getElementById("nnueInfoFile").innerText = "-";
+  document.getElementById("nnueInfoArch").innerText = "-";
+  document.getElementById('nnueAct').innerHTML = "";
+  _nnue_network = null;
 
   document.getElementById("editText").style = "width: 100%;";
   document.getElementById("editCode").style = "width: 100%;";
@@ -1739,8 +1808,57 @@ function showLegalMoves(from) {
 }
 function showBoard() {
   var showindex = document.getElementById('bodyContentTable').style.display == ""
-               || document.getElementById('bodyContentGraph').style.display == "" ? 0 : curindex;
+               || document.getElementById('bodyContentGraph').style.display == ""
+               || document.getElementById('bodyContentNNUE').style.display == "" ? 0 : curindex;
   var pos = parseFEN(document.getElementById('fen').innerHTML);
+  var nnueeval = null;
+  if (document.getElementById('bodyContentNNUE').style.display == "") {
+    var v = nnueEvaluate(pos, true);
+    nnueeval = v == null ? "-" : v + " (" + (v / PAWNVALUE).toFixed(2) + ")" || "";
+    document.getElementById('thumb4').style.display = v == null ? "none" : "";
+    if (v != null) {
+        var elem4 = document.getElementById('chessboard4');
+        while (elem4.firstChild) elem4.removeChild(elem4.firstChild);
+        var pos2 = colorflip(colorflip(pos));
+        for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
+          var diff = null;
+          if (board(pos, x, y).toUpperCase() != "K" && board(pos, x, y) != "-") {
+            var t = pos2.b[x][y];
+            pos2.b[x][y] = "-";
+            var v2 = nnueEvaluate(pos2);
+            pos2.b[x][y] = t;
+            diff = v - v2;
+          }
+          var div = document.createElement('div');
+          div.style.left = x * 28 + "px";
+          div.style.top = y * 28 + "px";
+          div.className = ((x + y) % 2 ? "d" : "l");
+          if (diff != null) {
+            div.className += " h" + ((diff / PAWNVALUE < -99.9 || diff / PAWNVALUE > 99.9)? " s" : "");
+            div.innerHTML = (diff / PAWNVALUE).toFixed(1); 
+          }
+          elem4.appendChild(div);
+        }
+        var elemact = document.getElementById('nnueAct');
+        while (elemact.firstChild) elemact.removeChild(elemact.firstChild);
+        var network = _nnue_network;
+        for (var i = 0; i < network.length; i++) if (network[i].act != null) {
+            var div = document.createElement('div');
+            div.className = "layer";
+            for (var j = 0; j < network[i].act.length; j++) {
+                var div2 = document.createElement('div');
+                div2.className = "neuron";
+                var c = (127-network[i].act[j]) / 127 * 100;
+                div2.style.backgroundColor = "hsl(214, 47%, "+c+"%)";
+                div2.style.color = parseFloat((network[i].act[j] / 127).toFixed(1)) >= 0.5 ? "#ffffff" : "#000000";
+                div2.innerText = network[i].act[j] > 0 ? (network[i].act[j] / 127).toFixed(1) : "";
+                div.appendChild(div2);
+            }
+            elemact.appendChild(div);
+        }
+    }
+  } else document.getElementById('thumb4').style.display = "none";
+
   var func = null, cureval = null, curevalflip = null, n2 = data[showindex].name.toLowerCase().replace(/ /g, "_");
   document.getElementById('buttonstm').className = pos.w ? "on white" : "on black";
   document.getElementById('buttonstm').title = pos.w ? "white to move" : "black to move";
@@ -1810,7 +1928,8 @@ function showBoard() {
   var whiteEvalString = data[showindex].name + (data[showindex].forwhite ? " (white)" : "") +  " = <b>" + cureval + evalInPawns+ "</b>";
   var blackEvalString = data[showindex].forwhite ? data[showindex].name +  " (black) = <b>" + curevalflip + "</b><br/>" : "";
   var totalEvalString = data[showindex].forwhite ? data[showindex].name + " (total) = <b>" + (cureval - curevalflip) + "</b>" : "";
-  document.getElementById('thumbcaption').innerHTML = whiteEvalString + (data[showindex].forwhite ? "<br/>" : "") + blackEvalString + totalEvalString;
+  var nnueEvalString = nnueeval != null ? "<br/><span style='color:#f34b7d;font-weight:bold;'>NNUE</span> = <b>" + nnueeval + "</b>" : "";
+  document.getElementById('thumbcaption').innerHTML = whiteEvalString + (data[showindex].forwhite ? "<br/>" : "") + blackEvalString + totalEvalString + nnueEvalString;
   document.getElementById('thumbcaption2').innerHTML = whiteEvalString;
   document.getElementById('thumbcaption3').innerHTML = blackEvalString;
   document.getElementById('extlinkstitle').style.display = data[showindex].links.length > 0 ? "" : "none";
@@ -2262,6 +2381,85 @@ function chessboardOnDblClick(e) {
   timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
 }
 
+function nnueFileLoad(e) {
+    _nnue_network = null;
+    if (e == null || e.target == null || e.target.files == null || e.target.files.length == 0 || e.target.files[0] == null) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+        var a = new Int8Array(fr.result), fp = a.byteOffset;
+        function getBuffer(size) { fp += size; return a.buffer.slice(fp - size, fp); }
+        var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], archSize = header[2];
+        if (version != 0x7AF32F16) { alert("unsupported network version"); return; }
+        var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize)));
+        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:512},
+                       {name:"AffineTransform",input:512,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:1}]
+        for (var i = 0; i < network.length; i++) {
+            if (network[i].name == "FeatureTransformer") {
+                var FeatureTransformer_hash = new Uint32Array(getBuffer(4))[0];
+                network[i].biases = new Int16Array(getBuffer(network[i].output));
+                network[i].weights = new Int16Array(getBuffer(network[i].output * network[i].input));
+                var Network_hash = new Int32Array(getBuffer(4))[0];
+            }
+            if (network[i].name == "AffineTransform") {
+                network[i].biases = new Int32Array(getBuffer(network[i].output * 4));
+                network[i].weights = new Int8Array(getBuffer(network[i].output * network[i].input));
+            }
+        }
+        if (fp - a.byteOffset != a.length) { alert("error in network file"); return; }
+        _nnue_network = network;
+        document.getElementById("nnueInfoFile").innerText = e.target.files[0].name;
+        document.getElementById("nnueInfoArch").innerText = arch;
+        showBoard();
+    };
+    fr.onerror = function () { alert("error reading file"); }
+    fr.readAsArrayBuffer(e.target.files[0]);
+}
+
+function nnuePosFeatures(pos, flip) {
+    var list = [], king = 0;
+    for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
+        if (board(pos, x, y) == "K") { king = (flip ? 7 - x : x) + 8 * (7 - y); }
+    }
+    for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
+        var index = "PpNnBbRrQq".indexOf(board(pos, x, y));
+        if (index >= 0) list.push(1 + (64 * 10 + 1) * king + index * 64 + (flip ? 7 - x : x) + 8 * (7 - y));
+    }
+    return list;
+}
+
+function nnueEvaluate(pos, saveAct) {
+    if (typeof _nnue_network === 'undefined' || _nnue_network == null) return null;
+    var network = _nnue_network, data = [];
+    for (var i = 0; i < network.length; i++) {
+        if (network[i].name == "FeatureTransformer") {
+            var hd = network[i].output / 2, accumulation=[[],[]];
+            for (var p = 0; p < 2; p++) {
+                for (var j = 0; j < hd; j++) accumulation[p].push(network[i].biases[j]);
+                var features = nnuePosFeatures(p == 0 ? pos : colorflip(pos), p != 0);
+                for (var k = 0; k < features.length; k++) {
+                    for (var j = 0; j < hd; j++) accumulation[p][j] += network[i].weights[hd * features[k] + j];
+                }
+            }
+            for (var j = 0; j < hd * 2 ;j++) data.push(Math.max(0, Math.min(127, accumulation[pos.w ^ (j < hd)][j % hd])));
+            if (saveAct) network[i].act = data;
+        } else if (network[i].name == "AffineTransform") {
+            var odim = network[i].output, idim = network[i].input, output = [];
+            for (var j = 0; j < odim; j++) {
+                var sum = network[i].biases[j];
+                for (var k = 0; k < idim; k++) sum += network[i].weights[j * idim + k] * data[k];
+                output.push(sum);
+            }
+            data = output;
+        } else if (network[i].name == "ClippedReLU") {
+            for (var j = 0; j < data.length; j++) data[j] = Math.max(0, Math.min(127, data[j] >> 6));
+            if (saveAct) network[i].act = data;
+        }
+    }
+    return Math.max(Math.min((data[0] / 16) >> 0, 31507), -31507) * (pos.w ? 1 : -1);
+}
+
 window.onload = function () {
   showMenu();
   doEval();
@@ -2276,7 +2474,7 @@ window.onload = function () {
 }
 </script>
 <script id="loadData">var data = [], curindex = null;
-data.push({"name":"Main evaluation","group":"","text":"<b>$</b>. An evaluation function is used to heuristically determine the relative value of a positions used in general case when no specialized evaluation or tablebase evaluation is available. In Stockfish it is never applied for positions where king of either side is in check. Resulting value is computed by combining [[Middle game evaluation]] and [[End game evaluation]]. We use <a class=\"external\" href=\"https://www.chessprogramming.org/Tapered_Eval\">Tapered Eval</a>, a technique used in evaluation to make a smooth transition between the phases of the game. [[Phase]] is a coeficient of simple linear combination. Before using  [[End game evaluation]] in this formula we also scale it down using [[Scale factor]].","code":"function $$(pos) {\n  var mg = $middle_game_evaluation(pos);\n  var eg = $end_game_evaluation(pos);\n  var p = $phase(pos), rule50 = pos.m[0];\n  eg = eg * $scale_factor(pos, eg) / 64;\n  var v = (((mg * p + ((eg * (128 - p)) << 0)) / 128) << 0);\n  v = ((v / 16) << 0) * 16;\n  v += $tempo(pos);\n  v = (v * (100 - rule50) / 100) << 0;\n  return v;\n}","links":[["https://www.chessprogramming.org/Evaluation","Evaluation in cpw"],["https://www.chessprogramming.org/Tapered_Eval","Tapered Eval in cpw"],["https://www.chessprogramming.org/Game_Phases","Game Phases in cpw"],["https://www.chessprogramming.org/Tempo","Tempo in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false,"elo":null});
+data.push({"name":"Main evaluation","group":"","text":"<b>$</b>. An evaluation function is used to heuristically determine the relative value of a positions used in general case when no specialized evaluation or tablebase evaluation is available. In Stockfish it is never applied for positions where king of either side is in check. Resulting value is computed by combining [[Middle game evaluation]] and [[End game evaluation]]. We use <a class=\"external\" href=\"https://www.chessprogramming.org/Tapered_Eval\">Tapered Eval</a>, a technique used in evaluation to make a smooth transition between the phases of the game. [[Phase]] is a coeficient of simple linear combination. Before using  [[End game evaluation]] in this formula we also scale it down using [[Scale factor]].","code":"function $$(pos) {\n  var mg = $middle_game_evaluation(pos);\n  var eg = $end_game_evaluation(pos);\n  var p = $phase(pos), rule50 = $rule50(pos);\n  eg = eg * $scale_factor(pos, eg) / 64;\n  var v = (((mg * p + ((eg * (128 - p)) << 0)) / 128) << 0);\n  if (arguments.length == 1) v = ((v / 16) << 0) * 16;\n  v += $tempo(pos);\n  v = (v * (100 - rule50) / 100) << 0;\n  return v;\n}","links":[["https://www.chessprogramming.org/Evaluation","Evaluation in cpw"],["https://www.chessprogramming.org/Tapered_Eval","Tapered Eval in cpw"],["https://www.chessprogramming.org/Game_Phases","Game Phases in cpw"],["https://www.chessprogramming.org/Tempo","Tempo in cpw"]],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false,"elo":null});
 data.push({"name":"Isolated","group":"Pawns","text":"<b>$</b> checks if pawn is isolated. In chess, an isolated pawn is a pawn which has no friendly pawn on an adjacent file.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0 ; y < 8; y++) {\n    if (board(pos, square.x - 1, y) == \"P\") return 0;\n    if (board(pos, square.x + 1, y) == \"P\") return 0;\n  }\n  return 1;\n}","links":[["https://en.wikipedia.org/wiki/Isolated_pawn","Isolated pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true,"elo":{"value":"14.8","error":"4.2","link":"http://tests.stockfishchess.org/tests/view/5a7b374d0ebc5902971a9a58"}});
 data.push({"name":"Opposed","group":"Pawns","text":"<b>$</b> flag is set if there is opponent opposing pawn on the same file to prevent it from advancing.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  for (var y = 0; y < square.y; y++) {\n    if (board(pos, square.x, y) == \"p\") return 1;\n  }\n  return 0;\n}","links":[["https://www.chessprogramming.org/Evaluation","Evaluation"],["https://www.chessprogramming.org/Tapered_Eval","Tapered Eval"],["https://www.chessprogramming.org/Game_Phases","Game Phases"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":false});
 data.push({"name":"Rank","group":"Helpers","text":"<b>$</b> calculates rank of square.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  return 8 - square.y;\n}","links":[],"eval":true,"squares":2,"highlight":0,"forwhite":true});
@@ -2400,6 +2598,7 @@ data.push({"name":"Pawn attacks span","group":"Helpers","text":"<b>$</b> Compute
 data.push({"name":"Doubled isolated","group":"Pawns","text":"<b>$</b> is penalty if a doubled isolated pawn is stopped\nonly by a single opponent pawn on the same file.\n","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  if (board(pos, square.x, square.y) != \"P\") return 0;\n  if ($isolated(pos, square)) {\n    var obe=0,eop=0,ene=0;\n    for (var y = 0; y < 8; y++) {\n      if (y > square.y && board(pos, square.x, y) == \"P\") obe++;\n      if (y < square.y && board(pos, square.x, y) == \"p\") eop++;\n      if (board(pos, square.x - 1, y) == \"p\"\n       || board(pos, square.x + 1, y) == \"p\") ene++;\n    }\n    if (obe > 0 && ene == 0 && eop > 0) return 1;\n  }\n  return 0;\n\n}","links":[["https://en.wikipedia.org/wiki/Doubled_pawn","Doubled pawn"]],"eval":true,"squares":0,"highlight":2,"forwhite":true,"graph":true,"elo":null});
 data.push({"name":"Pawns mg","group":"Pawns","text":"<b>$</b> is middlegame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  if ($doubled_isolated(pos, square)) v -= 11;\n  else if ($isolated(pos, square)) v -= 5;\n  else if ($backward(pos, square)) v -= 9;\n  v -= $doubled(pos, square) * 11;\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) : 0;\n  v -= 13 * $weak_unopposed_pawn(pos, square);\n  v += [0,-11,-3][$blocked(pos, square)];\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false,"elo":null});
 data.push({"name":"Pawns eg","group":"Pawns","text":"<b>$</b> is endgame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  if ($doubled_isolated(pos, square)) v -= 56;\n  else if ($isolated(pos, square)) v -= 15;\n  else if ($backward(pos, square)) v -= 24;\n  v -= $doubled(pos, square) * 56;\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) * ($rank(pos, square) - 3) / 4 << 0 : 0;\n  v -= 27 * $weak_unopposed_pawn(pos, square);\n  v -= 56 * $weak_lever(pos, square);\n  v += [0,-4,4][$blocked(pos, square)];\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false,"elo":null});
+data.push({"name":"Rule50","group":"","text":"<b>$</b>","code":"function $$(pos, square) {\n  if (square != null) return 0;\n  return pos.m[0];\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false,"elo":null});
 </script> 
 
 </body></html>
