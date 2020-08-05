@@ -399,7 +399,7 @@
                 line-height: 18px;
                 height: 18px;
                 width: 272px;
-                font-size: 12px;                
+                font-size: 0;   
             }
             #thumbbuttons div {
                 display: inline-block;
@@ -415,32 +415,59 @@
                 background-color: #f8f9fa;
                 margin-right: 2px;
                 padding: 0 5px 0 5px;
+                height: 18px;
+                font-size: 12px;
             }
             #buttonback, #buttonforward {
-                font-size: 16px;
+                width: 15px;
             }
+            #buttonback {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12'%3E%3Cpath fill='%23000000' d='M12 4L7 4L7 0L0 6L7 12L7 8L12 8L12 4Z' /%3E%3C/svg%3E");
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+            #buttonforward {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12'%3E%3Cpath fill='%23000000' d='M0 4L5 4L5 0L12 6L5 12L5 8L0 8L0 4Z' /%3E%3C/svg%3E");
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+            #buttonback.off { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12'%3E%3Cpath fill='%23777777' d='M12 4L7 4L7 0L0 6L7 12L7 8L12 8L12 4Z' /%3E%3C/svg%3E"); }
+            #buttonforward.off { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12'%3E%3Cpath fill='%23777777' d='M0 4L5 4L5 0L12 6L5 12L5 8L0 8L0 4Z' /%3E%3C/svg%3E"); }
             #buttonstm {
                 float: right;
-                border-radius: 10px !important;
-                height: 18px;
                 width: 18px;
                 padding: 0 !important;
                 text-align: center;
             }
             #buttonstm.white, #buttonstm.white:hover {
-                background-color: #ffffff !important;
+                background-color: #ffffff;
             }
             #buttonstm.black, #buttonstm.black:hover {
                 background-color: #000000 !important;
                 color: #ffffff !important;
             }
-
+            #tooltipcopyfen {
+                background-color: #555;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 8px 6px;
+                position: absolute;
+                z-index: 1;
+                bottom: 150%;
+                left: 50%;
+                margin-left: -86px;
+                display: none;
+                white-space: nowrap;
+            }
+            #tooltipcopyfen.hide { display: none; }
+            #tooltipcopyfen.show { display: inline-block; }
             #thumbbuttons .off {
                 color: #777777;
             }
             #thumbbuttons .on:hover {
-                background-color: #ffffff;
-                color: #222222;
+                background-color: #f2f2f2;
+                color: #000000;
                 cursor: pointer;
             }
 
@@ -920,7 +947,12 @@
         </div>
         <div id="bodyContent" style="">
             <div id="thumb" class="thumb tright" style="">
-                <div id="thumbbuttons"><div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">◄</div><div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">►</div><div id="buttonstm" class="on white" onclick="command('sidetomove');" title="white to move">w</div></div>
+                <div id="thumbbuttons">
+                    <div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">&nbsp;</div>
+                    <div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">&nbsp;</div>
+                    <div id="buttoncopyfen" class="on" onclick="command('copyfen');" title="copy FEN">COPY FEN<span id="tooltipcopyfen"></span></div>
+                    <div id="buttonreset" class="on" onclick="command('reset');" title="reset">RESET</div>
+                    <div id="buttonstm" class="on white" onclick="command('sidetomove');" title="white to move">w</div></div>
                 <div class="thumbinner">
                 <table class="cbTable" cellspacing="0" cellpadding="0">
                 <tbody><tr><td></td><td>a</td><td>b</td><td>c</td><td>d</td><td>e</td><td>f</td><td>g</td><td>h</td><td></td></tr>
@@ -1452,6 +1484,17 @@ function command(text) {
     showBoard();
   } else if (text.toLowerCase() == "nnue") {
     editmode(5);
+  } else if (text.toLowerCase() == "copyfen") {
+    var e = document.getElementById("searchInput");
+    e.value = document.getElementById('fen').innerHTML;
+    e.select();
+    e.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    e.value = "";
+    e.blur();
+    document.getElementById("tooltipcopyfen").style.display = "inline-block";
+    document.getElementById("tooltipcopyfen").innerText = "FEN copied to clipboard.";
+    setTimeout(function(d){ document.getElementById("tooltipcopyfen").style.display = "none"; }, 2000);
   } else if (text.toLowerCase() == "bench") {
     var list = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
@@ -2238,8 +2281,6 @@ var _history = [], _historyindex = -1;
 function historybuttons() {
   document.getElementById('buttonback').className = _historyindex > 0 ? "on" : "off";
   document.getElementById('buttonforward').className = _historyindex < _history.length - 1 ? "on" : "off";
-  document.getElementById('buttonback').innerHTML = "&#9668;";
-  document.getElementById('buttonforward').innerHTML = "&#9658;";
 }
 function historyadd(fen) {
   if (_historyindex >= 0 && _history[_historyindex] == fen) return;
