@@ -446,7 +446,7 @@
                 background-color: #000000 !important;
                 color: #ffffff !important;
             }
-            #tooltipcopyfen {
+            #tooltipcopyfen, #tooltipcopyurl {
                 background-color: #555;
                 color: #fff;
                 text-align: center;
@@ -460,8 +460,8 @@
                 display: none;
                 white-space: nowrap;
             }
-            #tooltipcopyfen.hide { display: none; }
-            #tooltipcopyfen.show { display: inline-block; }
+            #tooltipcopyfen.hide, #tooltipcopyurl.hide { display: none; }
+            #tooltipcopyfen.show, #tooltipcopyurl.show { display: inline-block; }
             #thumbbuttons .off {
                 color: #777777;
             }
@@ -952,7 +952,8 @@
                 <div id="thumbbuttons">
                     <div id="buttonback" class="off" onclick="historymove(-1,event);" title="back">&nbsp;</div>
                     <div id="buttonforward" class="off" onclick="historymove(+1,event);" title="forward">&nbsp;</div>
-                    <div id="buttoncopyfen" class="on" onclick="command('copyfen');" title="copy FEN">COPY FEN<span id="tooltipcopyfen"></span></div>
+                    <div id="buttoncopyfen" class="on" onclick="command('copyfen');" title="copy FEN">FEN<span id="tooltipcopyfen"></span></div>
+                    <div id="buttoncopyurl" class="on" onclick="command('copyurl');" title="copy URL">URL<span id="tooltipcopyurl"></span></div>
                     <div id="buttonreset" class="on" onclick="command('reset');" title="reset">RESET</div>
                     <div id="buttonstm" class="on white" onclick="command('sidetomove');" title="white to move">w</div></div>
                 <div class="thumbinner">
@@ -1497,6 +1498,17 @@ function command(text) {
     document.getElementById("tooltipcopyfen").style.display = "inline-block";
     document.getElementById("tooltipcopyfen").innerText = "FEN copied to clipboard.";
     setTimeout(function(d){ document.getElementById("tooltipcopyfen").style.display = "none"; }, 2000);
+  } else if (text.toLowerCase() == "copyurl") {
+    var e = document.getElementById("searchInput");
+    e.value = location.protocol + '//' + location.host + location.pathname + "?p=" + encodeURIComponent(document.getElementById('fen').innerHTML);
+    e.select();
+    e.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    e.value = "";
+    e.blur();
+    document.getElementById("tooltipcopyurl").style.display = "inline-block";
+    document.getElementById("tooltipcopyurl").innerText = "URL copied to clipboard.";
+    setTimeout(function(d){ document.getElementById("tooltipcopyurl").style.display = "none"; }, 2000);
   } else if (text.toLowerCase() == "bench") {
     var list = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
