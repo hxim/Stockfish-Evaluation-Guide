@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="UTF-8">
+    <title>NNUE eval file compressor demo</title>
+</head>
+<body>
+    <p>To compress halfkp_256x2-32-32 network load original file here: <input type="file" onchange="nnueCompressOrDecompress(event, false)"></p>
+    <p>To decompress halfkp_256x2-32-32 network load compressed file here: <input type="file" onchange="nnueCompressOrDecompress(event, true)"></p>
+<script>
+function download(buffer, filename) {
+    if (!confirm("download "+buffer.length+" bytes?")) return;
+    const blob = new Blob([buffer], {type: "data:application/octet-stream"});
+    const blobUrl = URL.createObjectURL(blob);
+    window.location = blobUrl;
+}           
+function PredictWeight(w, j) {
+    const hd = 256;
+    var a1 = j-hd >= 0 ? w[j-hd] : 0;
+    var a2 = j-7*hd >= 0 ? w[j-7*hd] : a1;
+    var a3 = j-8*hd >= 0 ? w[j-8*hd] : a1;
+    var a4 = j-9*hd >= 0 ? w[j-9*hd] : a1;
+    var a = (a1+a2+a3+a4)/4;
+
+    var b1 = j-641*hd >= 0 ? w[j-641*hd] : 0;
+    var b2 = j-641*7*hd >= 0 ? w[j-641*7*hd] : b1;
+    var b3 = j-641*8*hd >= 0 ? w[j-641*8*hd] : b1;
+    var b4 = j-641*9*hd >= 0 ? w[j-641*9*hd] : b1;
+    var b = (b1+b2+b3+b4)/4;
+    
+    return j-641*hd >= 0 ? (((a+b*15)/16)>>0) : (a>>0);
+}
+function CompressWeights(a, size) {
+    var weights = new Int16Array(a.data.buffer.slice(a.fp, a.fp + size)), output = new Uint8Array(weights.length * 2), len = 0;
+    for (var j = 0; j < weights.length; j++) {
+        var v = weights[j] - PredictWeight(weights, j);
+        var sign = v > 0 ? 0 : 1;
+        if (v > 0) v--;
+        v = Math.abs(v);
+        function writebit(bit) {
+            if (bit) output[len >> 3] = output[len >> 3] | (1 << (len % 8));
+            len++;
+        }
+        while (v >= 4) { v -= 4; writebit(0); } writebit(1);
+        writebit(sign);
+        writebit((v >> 1) % 2);
+        writebit(v % 2);
+    }
+    a.fp += size;
+    return output.slice(0, ((len + 7) >> 3));
+}
+function DecompressWeights(a, size) {
+    var weights = new Int16Array(size/2), input = new Uint8Array(a.data.buffer.slice(a.fp)); len = 0, j = 0;
+    while (j < size/2) {
+        var v = 0;
+        function readbit() {
+            var bit = (input[len >> 3] & (1 << (len % 8))) > 0 ? 1 : 0;
+            len++;
+            return bit;
+        }
+        while (readbit() == 0 && v < (1 << 16)) v += 4;
+        if (v >= (1 << 16)) { alert("corrupted file"); return; }
+        var sign = readbit();
+        v += 2 * readbit();
+        v += readbit();
+        if (!sign) v++; else v = -v;
+        weights[j] = v + PredictWeight(weights, j);
+        j++;
+    }
+    a.fp += ((len + 7) >> 3);
+    return new Int8Array(weights.buffer);
+}
+function nnueCompressOrDecompress(e, decomp) {
+    if (e == null || e.target == null || e.target.files == null || e.target.files.length == 0 || e.target.files[0] == null) return;
+    var fr = new FileReader();
+    fr.onload = function () {
+        var buffer = new Int8Array(22000000), bufferpos = 0;
+        var d = new Int8Array(fr.result);
+        var a = { data: d, fp: d.byteOffset };
+        function getBuffer(size, compress) { a.fp += size; var b = a.data.buffer.slice(a.fp - size, a.fp); buffer.set(new Int8Array(b),bufferpos); bufferpos += b.byteLength; return b; }
+        var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], archSize = header[2];
+        if (version != 0x7AF32F16) { alert("unsupported network version"); return; }
+        var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize)));
+        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:512},
+                       {name:"AffineTransform",input:512,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:1}]
+        for (var i = 0; i < network.length; i++) {
+            if (network[i].name == "FeatureTransformer") {
+                var FeatureTransformer_hash = new Uint32Array(getBuffer(4))[0];
+                network[i].biases = new Int16Array(getBuffer(network[i].output));
+                var size = network[i].output * network[i].input;
+                var b = decomp ? DecompressWeights(a, size) : CompressWeights(a, size);
+                buffer.set(b,bufferpos);
+                bufferpos += b.byteLength;
+                var Network_hash = new Int32Array(getBuffer(4))[0];
+            }
+            if (network[i].name == "AffineTransform") {
+                network[i].biases = new Int32Array(getBuffer(network[i].output * 4));
+                network[i].weights = new Int8Array(getBuffer(network[i].output * network[i].input));
+            }
+        }
+        if (a.fp - a.data.byteOffset != a.data.length) { alert("error in network file"); return; }
+        download(buffer.slice(0, bufferpos), "file.nnue.compressed");
+    };
+    fr.onerror = function () { alert("error reading file"); }
+    fr.readAsArrayBuffer(e.target.files[0]);
+}
+
+</script>
+</body></html>
