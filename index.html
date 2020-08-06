@@ -1899,7 +1899,7 @@ function neuronHighlightEnd() {
         var net = _nnue_network[i - 1];
         for (var k = 0; k < net.input; k++) {
             var elem = document.getElementById('N_' + (i - 2) + "_" + k);
-            var avalue = parseInt(elem.title);
+            var avalue = parseInt(elem.innerText.length == 0 ? 0 : elem.innerText);
             var c = (127-avalue) / 127 * 100;
             elem.style.backgroundColor = "hsl(214, 47%, "+c+"%)";
             elem.style.color = parseFloat((avalue / 127).toFixed(1)) >= 0.5 ? "#ffffff" : "#000000";
@@ -1952,8 +1952,7 @@ function showBoard() {
                 var c = (127-network[i].act[j]) / 127 * 100;
                 div2.style.backgroundColor = "hsl(214, 47%, "+c+"%)";
                 div2.style.color = parseFloat((network[i].act[j] / 127).toFixed(1)) >= 0.5 ? "#ffffff" : "#000000";
-                div2.title = network[i].act[j];
-                div2.innerText = network[i].act[j] > 0 ? (network[i].act[j] / 127).toFixed(1) : "";
+                div2.innerText = network[i].act[j] > 0 ? network[i].act[j] : "";
                 if (network[i].act[j] > 0) {
                     div2.onmouseover = neuronHighlight;
                     div2.onmouseout = neuronHighlightEnd;
