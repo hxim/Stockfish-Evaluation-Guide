@@ -1057,7 +1057,7 @@
                 <p>Stockfish NNUE is a port of a shogi neural network named NNUE (efficiently updateable neural network backwards) to Stockfish 11. In this tool only halfkp_256x2-32-32 architecture is currently supported.</p>
                 <h2><span>Neural network</span></h2>
                 <p>To use NNUE evaluation load supported neural network here: <input type="file" accept=".nnue" onchange="nnueFileLoad(event)"><br/>You can download some networks here: <a href="https://tests.stockfishchess.org/nns">https://tests.stockfishchess.org/nns</a></p>
-                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><br><b>Architecture:</b> <span id="nnueInfoArch">-</span>
+                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><br/><b>Architecture:</b> <span id="nnueInfoArch">-</span><br/><b>Entropy estimation:</b> <span id="nnueInfoEnt">-</span>
                 </p>
                 <div>
                 <div style="float:left;max-width:550px;margin-right:1.5em;"><h2><span>Per square value estimation</span></h2>
@@ -1724,6 +1724,7 @@ function save() {
   document.getElementById("graphData").innerHTML = "";
   document.getElementById("nnueInfoFile").innerText = "-";
   document.getElementById("nnueInfoArch").innerText = "-";
+  document.getElementById("nnueInfoEnt").innerText = "-";
   document.getElementById('nnueAct').innerHTML = "";
   _nnue_network = null;
 
@@ -2496,6 +2497,36 @@ function chessboardOnDblClick(e) {
   timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
 }
 
+function estimateEntropy() {
+    if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
+    var w = _nnue_network[0].weights, len = _nnue_network[0].fileLen;
+    var cnt = new Int32Array(65536), sum = 0, last = 0;
+    for (var j = 0; j < w.length; j++) {
+        const hd = 256;
+        const pi = ((((j / hd) >> 0) - 1) % 641);
+        const piece = (pi / 64) >> 0;
+        const rank = ((pi % 64) / 8) >> 0;
+        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1)) { w[j] = 0; continue; }
+        const a1 = j-hd >= 0 && ((((j/hd)>>0) - 1) % 64) > 1 ? w[j-hd] : 0;
+        const a2 = j-7*hd >= 0  && ((((j/hd)>>0)- 1) % 64) > 7? w[j-7*hd] : a1;
+        const a3 = j-8*hd >= 0  && ((((j/hd)>>0) - 1) % 64) > 8? w[j-8*hd] : a1;
+        const a4 = j-9*hd >= 0  && ((((j/hd)>>0) - 1) % 64) > 9? w[j-9*hd] : a1;
+        const a = (a1+a2+a3+a4)/4;
+        const b1 = j-641*hd >= 0 ? w[j-641*hd] : 0;
+        const b2 = j-641*7*hd >= 0 ? w[j-641*7*hd] : b1;
+        const b3 = j-641*8*hd >= 0 ? w[j-641*8*hd] : b1;
+        const b4 = j-641*9*hd >= 0 ? w[j-641*9*hd] : b1;
+        const b = (b1+b2+b3+b4)/4;
+        const p = j-641*hd >= 0 ? (((b1+a+b*18)/20)>>0) : (a>>0);
+        const v = w[j] - p;
+        const ci = v<=0?-v*2:(v*2-1);
+        cnt[ci]++; last = last < ci ? ci : last;
+        sum++;
+    }
+    var ent = (len * 8 - (w.length * 16) + (cnt.slice(0,last+1).join().length + 1) * 4 + cnt.map(x => (x*(-Math.log2(x/sum)))).reduce(function(a, b) { return a+b; }, 0)) / (len * 8);
+    document.getElementById("nnueInfoEnt").innerText = ent.toFixed(4);
+}
+
 function nnueFileLoad(e) {
     _nnue_network = null;
     if (e == null || e.target == null || e.target.files == null || e.target.files.length == 0 || e.target.files[0] == null) return;
@@ -2505,7 +2536,7 @@ function nnueFileLoad(e) {
         function getBuffer(size) { fp += size; return a.buffer.slice(fp - size, fp); }
         var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], archSize = header[2];
         if (version != 0x7AF32F16) { alert("unsupported network version"); return; }
-        var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize)));
+        var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize))), ent = "-";
         var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:512},
                        {name:"AffineTransform",input:512,output:32}, {name:"ClippedReLU"},
                        {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
@@ -2515,6 +2546,7 @@ function nnueFileLoad(e) {
                 var FeatureTransformer_hash = new Uint32Array(getBuffer(4))[0];
                 network[i].biases = new Int16Array(getBuffer(network[i].output));
                 network[i].weights = new Int16Array(getBuffer(network[i].output * network[i].input));
+                network[i].fileLen = a.byteLength;
                 var Network_hash = new Int32Array(getBuffer(4))[0];
             }
             if (network[i].name == "AffineTransform") {
@@ -2527,6 +2559,7 @@ function nnueFileLoad(e) {
         document.getElementById("nnueInfoFile").innerText = e.target.files[0].name;
         document.getElementById("nnueInfoArch").innerText = arch;
         showBoard();
+        window.setTimeout(estimateEntropy, 1);
     };
     fr.onerror = function () { alert("error reading file"); }
     fr.readAsArrayBuffer(e.target.files[0]);
