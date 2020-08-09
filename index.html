@@ -36,7 +36,7 @@
                 bottom: 41px;
                 top: 11px;
                 right: 258px;
-                width: 1px;                
+                width: 1px;
             }
             .graph .line1
             {
@@ -45,7 +45,7 @@
                 position: absolute;
                 bottom: 41px;
                 top: 11px;
-                width: 1px;                
+                width: 1px;
             }
             .graph .xlabel
             {
@@ -54,7 +54,7 @@
                 bottom: 17px;
                 width: 20px;
                 text-align: center;
-            }               
+            }
             .graph .bar
             {
                 box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.5);
@@ -248,7 +248,7 @@
                 border: 1px solid #a2a9b1;
                 padding: 0.2em 0.4em;
             }
-                        
+
             .contentText ul {
                 margin: 0.3em 0 0 1.6em;
                 padding: 0;
@@ -320,24 +320,24 @@
                 padding-bottom: .17em;
                 border-bottom: 1px solid #aaa;
             }
-            
+
             h2 {
                 font-family: "Linux Libertine",Georgia,Times,serif;
                 line-height: 1.3;
                 margin-bottom: 0.25em;
-                padding: 0;            
+                padding: 0;
             }
 
             h2 {
                 font-size: 1.5em;
                 margin-top: 1em;
             }
-            
+
             h3 {
                 font-size: 1.2em;
                 border-bottom: none;
                 font-weight: bold;
-            }                
+            }
 
             #content h3 {
                 line-height: 1.6;
@@ -399,7 +399,7 @@
                 line-height: 18px;
                 height: 18px;
                 width: 272px;
-                font-size: 0;   
+                font-size: 0;
             }
             #thumbbuttons div {
                 display: inline-block;
@@ -820,7 +820,7 @@
                         text-decoration: underline;
                         cursor: pointer;
                     }
-                    
+
 
                     div#leftmenu div.group div.body {
                         margin: 0 0 0 1.25em;
@@ -967,7 +967,7 @@
                 <div id="thumbcaption"></div>
                 </div>
                 </div><div class="contentText">
-                
+
                 <p id="text"></p>
                 <ul id="elolist"></ul>
                 <h2><span>Code</span></h2>
@@ -1044,7 +1044,7 @@
             <div class="contentText">
                 <div id="evalTable"></div>
             </div>
-        </div>        
+        </div>
         <div id="bodyContentGraph" style="display: none;">
             <div class="contentText">
                 <a onclick="refreshGraph(parseFEN(document.getElementById('fen').innerHTML));">Show position graph</a> |
@@ -1057,7 +1057,7 @@
                 <p>Stockfish NNUE is a port of a shogi neural network named NNUE (efficiently updateable neural network backwards) to Stockfish 11. In this tool only halfkp_256x2-32-32 architecture is currently supported.</p>
                 <h2><span>Neural network</span></h2>
                 <p>To use NNUE evaluation load supported neural network here: <input type="file" accept=".nnue" onchange="nnueFileLoad(event)"><br/>You can download some networks here: <a href="https://tests.stockfishchess.org/nns">https://tests.stockfishchess.org/nns</a></p>
-                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><br/><b>Architecture:</b> <span id="nnueInfoArch">-</span><br/><b>Entropy estimation:</b> <span id="nnueInfoEnt">-</span>
+                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><span id="nnueInfoHash" style="font-size:10px;color:#666666;"></span><br/><b>Architecture:</b> <span id="nnueInfoArch">-</span><br/><b>Entropy estimation:</b> <span id="nnueInfoEnt">-</span>
                 </p>
                 <div>
                 <div style="float:left;max-width:550px;margin-right:1.5em;"><h2><span>Per square value estimation</span></h2>
@@ -1081,7 +1081,7 @@
                 <div style="clear:both"></div>
                 </div>
             </div>
-        </div>   
+        </div>
     </div>
     <div>
         <div id="head">
@@ -1177,7 +1177,7 @@ function getGraphGroupList(pos) {
       } else {
         grouplist[index].item[0] += evals[0];
         grouplist[index].item[1] += evals[1];
-      }        
+      }
     }
 
   }
@@ -1259,7 +1259,7 @@ function graph2custom() {
     var pos = parseFEN(_history[i]);
     var result = 0;
     try { eval("result = (" + funccode + ")"); }
-    catch (e) {}       
+    catch (e) {}
     _graph2data[i].push({group:"Custom",elem:funccode,item:[null, null, result],hidden:false,mc:pos.m[1]});
   }
   adjustGraph2();
@@ -1298,7 +1298,7 @@ function adjustGraph2(nofilter) {
   }
   if (yscale > 10) while (yscale % 4 != 0) yscale++;
   var gDataPoints = "", gDataSvg = "";
-  var checkboxes = "";  
+  var checkboxes = "";
   gDataSvg += "<line x1=\"41\" y1=\""+(254)+"\" x2=\""+(23+len2*17)+"\" y2=\""+(254)+"\" style=\"stroke:rgba(255,255,255,0.5);stroke-width:1\"/>";
   for (var i = 1; i < yscale + 1; i++) {
     if (yscale > 10 && i % 4 != 0) continue;
@@ -1375,7 +1375,7 @@ function refreshGraph2() {
     if (typeof _nnue_network !== 'undefined' && _nnue_network != null) {
       var result = 0;
       try { eval("result = (nnueEvaluate(pos))"); }
-      catch (e) {}    
+      catch (e) {}
       data.push({group:"Custom",elem:"NNUE",item:[null, null, result],hidden:false,mc:data[0].mc});
     }
    _graph2data.push(data);
@@ -1568,7 +1568,7 @@ function editmode(edit) {
   document.getElementById('liTable').className = edit == 3 ? "selected" : "";
   document.getElementById('liGraph').className = edit == 4 ? "selected" : "";
   document.getElementById('liNNUE').className = edit == 5 ? "selected" : "";
-  
+
   document.getElementById('info').style.display = edit != 1 ? "" : "none";
   document.getElementById('bodyContent').style.display = edit == 0 ? "" : "none";
   document.getElementById('bodyContentEdit').style.display = edit == 1 ? "" : "none";
@@ -1631,7 +1631,7 @@ function apply() {
   data[curindex].group = document.getElementById('editGroup').value;
   data[curindex].text = document.getElementById('editText').value;
   data[curindex].code = document.getElementById('editCode').value;
-  
+
   var links = document.getElementById('editLinks').value;
   if (links.length == 0) links = []; else links = links.split("\n");
   for (var i = 0; i < links.length; i++) links[i] = links[i].split(",");
@@ -1660,7 +1660,7 @@ function duplicate() {
     data.push({});
     curindex = data.length - 1;
     apply();
-  }  
+  }
 }
 
 function remove() {
@@ -1670,7 +1670,7 @@ function remove() {
     editmode(0);
     showMenu();
     updatePage();
-  }  
+  }
 }
 
 function movetoend() {
@@ -1701,7 +1701,7 @@ function doEval() {
 function save() {
   if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') > 0) {
     alert("not supported in IE."); return;
-  }  
+  }
   editmode(0);
   document.getElementById('leftmenu').innerHTML = "";
   document.getElementById('text').innerHTML = "";
@@ -1723,6 +1723,7 @@ function save() {
   document.getElementById("evalTable").innerHTML = "";
   document.getElementById("graphData").innerHTML = "";
   document.getElementById("nnueInfoFile").innerText = "-";
+  document.getElementById("nnueInfoHash").innerText = "";
   document.getElementById("nnueInfoArch").innerText = "-";
   document.getElementById("nnueInfoEnt").innerText = "-";
   document.getElementById('nnueAct').innerHTML = "";
@@ -1731,7 +1732,7 @@ function save() {
   document.getElementById("editText").style = "width: 100%;";
   document.getElementById("editCode").style = "width: 100%;";
   document.getElementById("editLinks").style = "width: 100%;";
-  
+
   document.getElementById('loadData').innerHTML = "var data = [], curindex = null;\n";
   for (var i = 0; i < data.length; i++) {
     document.getElementById('loadData').innerHTML += "data.push(" + JSON.stringify(data[i]) + ");\n";
@@ -1791,12 +1792,12 @@ function showMenu() {
      + (grouplist[i].group.length > 0 ? "style=\"display:none;\"" : "")
      + "><ul>" + grouplist[i].item + "</ul></div>";
     document.getElementById('leftmenu').appendChild(div);
-  } 
+  }
 }
 function updatePage() {
   var n1 = data[curindex].name, n2 = n1.toLowerCase().replace(/ /g, "_");
   document.getElementById('text').innerHTML = data[curindex].text.replace("$", n1).replace(/\[\[/g,"<a onclick=\"golink(this);\">").replace(/\]\]/g,"</a>");
-  document.getElementById('elolist').innerHTML = 
+  document.getElementById('elolist').innerHTML =
     data[curindex].elo == null ? "" :
     "<li>ELO worth: <b>"+data[curindex].elo.value+"</b> ±"+data[curindex].elo.error+" <sup style=\"font-size:80%\"><a href=\""+data[curindex].elo.link+"\" target=\"_blank\">[test]</a></sup></li>";
   document.getElementById('code').innerHTML = data[curindex].code.replace(/\$\$/g, n2).replace(/\$/g, "");
@@ -1948,7 +1949,7 @@ function showBoard() {
           div.className = ((x + y) % 2 ? "d" : "l");
           if (diff != null) {
             div.className += " h" + ((diff / PAWNVALUE < -99.9 || diff / PAWNVALUE > 99.9)? " s" : "");
-            div.innerHTML = (diff / PAWNVALUE).toFixed(1); 
+            div.innerHTML = (diff / PAWNVALUE).toFixed(1);
           }
           elem4.appendChild(div);
         }
@@ -1981,7 +1982,7 @@ function showBoard() {
   document.getElementById('buttonstm').className = pos.w ? "on white" : "on black";
   document.getElementById('buttonstm').title = pos.w ? "white to move" : "black to move";
   document.getElementById('buttonstm').innerHTML = pos.w ? "w" : "b";
-  
+
   try {
     eval("func = $" + n2 + ";");
     cureval = func(pos);
@@ -1990,7 +1991,7 @@ function showBoard() {
   catch (e) {
     cureval = curevalflip = "[ERROR: " + e.message + "]";
   }
-  
+
   var elem = document.getElementById('chessboard1');
   var elem2 = document.getElementById('chessboard2');
   var elem3 = document.getElementById('chessboard3');
@@ -2014,7 +2015,7 @@ function showBoard() {
         sqeval = func(pos,{x:x,y:y});
         if (data[showindex].forwhite) sqevalblack = func(colorflip(pos),{x:x,y:7-y});
       }
-      catch (e) {}    
+      catch (e) {}
     }
     if (data[showindex].highlight > 0 && func != null) {
       if (sqeval != 0) div.className += " h1";
@@ -2023,11 +2024,11 @@ function showBoard() {
       }
     }
     elem.appendChild(div);
-    
+
     if (data[showindex].squares && func != null) {
       if (data[showindex].squares > 1 || sqeval != 0) {
         div2.className += " h" + ((sqeval >= 1000 || sqeval <= -1000)? " s" : "");
-        div2.innerHTML = sqeval; 
+        div2.innerHTML = sqeval;
       }
       elem2.appendChild(div2);
     }
@@ -2090,7 +2091,7 @@ function showBoard() {
     childlist += (nchild > 0 ? ", " : "") + intxt;
     document.getElementById("seealso").innerHTML += "<li>" + intxt + "</li>";
     nchild++;
-  }  
+  }
   document.getElementById('seealsotitle').style.display = nchild + nparent > 0 ? "" : "none";
   document.getElementById("childlist").innerHTML = nchild == 0 ? "This function calls no evaluation subterms." : "This function calls following evaluation subterms: " + childlist;
   document.getElementById("parentlist").innerHTML = nparent == 0 ? "It is used in no parent evaluation terms." : "It is used in following parent evaluation terms: " + parentlist;
@@ -2144,7 +2145,7 @@ function parseFEN(fen) {
       } else x++;
     }
   }
-  var castling, enpassant, whitemove = !(a.length > 1 && a[1] == 'b');  
+  var castling, enpassant, whitemove = !(a.length > 1 && a[1] == 'b');
   if (a.length > 2) {
     castling = [ a[2].indexOf('K') != -1, a[2].indexOf('Q') != -1,
                  a[2].indexOf('k') != -1, a[2].indexOf('q') != -1];
@@ -2212,7 +2213,7 @@ function isWhiteCheck(pos) {
      || board(pos, kx + 1, ky    ) == 'k'
      || board(pos, kx - 1, ky + 1) == 'k'
      || board(pos, kx    , ky + 1) == 'k'
-     || board(pos, kx - 1, ky + 1) == 'k') return true; 
+     || board(pos, kx - 1, ky + 1) == 'k') return true;
   for (var i = 0; i < 8; i++) {
     var ix = (i + (i > 3)) % 3 - 1;
     var iy = (((i + (i > 3)) / 3) << 0) - 1;
@@ -2253,7 +2254,7 @@ function doMove(pos, from, to, promotion) {
           && Math.abs(from.x - to.x) == 1) {
     r.b[to.x][from.y] = '-';
     r.b[to.x][to.y] = pos.b[from.x][from.y];
-    
+
   } else {
     r.b[to.x][to.y] = pos.b[from.x][from.y];
   }
@@ -2412,13 +2413,13 @@ function dragActivate() {
     _dragElement.style.zIndex = 10000;
     document.getElementById('chessboard1').appendChild(_dragElement);
     _dragActive = true;
-    
+
     var w = _dragElement.getBoundingClientRect().width;
     var h = _dragElement.getBoundingClientRect().height;
     var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + w / 2;
     var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + h / 2;
     var x1 = Math.round((_startX - offsetX) / w);
-    var y1 = Math.round((_startY - offsetY) / h);    
+    var y1 = Math.round((_startY - offsetY) / h);
     showLegalMoves({x:x1,y:y1});
 }
 
@@ -2450,7 +2451,7 @@ function onMouseUp(e) {
       var y1 = Math.round((_startY - offsetY) / h);
       var x2 = Math.round((e.clientX - offsetX) / w);
       var y2 = Math.round((e.clientY - offsetY) / h);
-      
+
       var pos = parseFEN(document.getElementById('fen').innerHTML);
       var legal = !_dragCtrl && isLegal(pos,{x:x1,y:y1},{x:x2,y:y2});
       if (legal) {
@@ -2482,7 +2483,7 @@ function chessboardOnDblClick(e) {
   var offsetX = document.getElementById('chessboard1').getBoundingClientRect().left + w / 2;
   var offsetY = document.getElementById('chessboard1').getBoundingClientRect().top + h / 2;
   var x1 = Math.round((e.clientX - offsetX) / w);
-  var y1 = Math.round((e.clientY - offsetY) / h);  
+  var y1 = Math.round((e.clientY - offsetY) / h);
   var pos = parseFEN(document.getElementById('fen').innerHTML);
   if (bounds(x1, y1)) {
     var s = '-PNBRQKpnbrqk-', index = s.indexOf(pos.b[x1][y1]);
@@ -2491,7 +2492,7 @@ function chessboardOnDblClick(e) {
   }
   document.getElementById('fen').innerHTML = generateFEN(pos);
   showBoard();
-  
+
   document.getElementById('chessboard1').onclick = chessboardOnDblClick;
   if (timer) window.clearTimeout(timer);
   timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
@@ -2558,6 +2559,9 @@ function nnueFileLoad(e) {
         _nnue_network = network;
         document.getElementById("nnueInfoFile").innerText = e.target.files[0].name;
         document.getElementById("nnueInfoArch").innerText = arch;
+        try { crypto.subtle.digest('SHA-256', a).then((hashBuffer) => {
+            document.getElementById("nnueInfoHash").innerText = " (" + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).splice(0, 6).join('') + ")";
+        }); } catch (e) {}
         showBoard();
         window.setTimeout(estimateEntropy, 1);
     };
@@ -2747,6 +2751,6 @@ data.push({"name":"Doubled isolated","group":"Pawns","text":"<b>$</b> is penalty
 data.push({"name":"Pawns mg","group":"Pawns","text":"<b>$</b> is middlegame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  if ($doubled_isolated(pos, square)) v -= 11;\n  else if ($isolated(pos, square)) v -= 5;\n  else if ($backward(pos, square)) v -= 9;\n  v -= $doubled(pos, square) * 11;\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) : 0;\n  v -= 13 * $weak_unopposed_pawn(pos, square);\n  v += [0,-11,-3][$blocked(pos, square)];\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false,"elo":null});
 data.push({"name":"Pawns eg","group":"Pawns","text":"<b>$</b> is endgame evaluation for pawns.","code":"function $$(pos, square) {\n  if (square == null) return sum(pos, $$);\n  var v = 0;\n  if ($doubled_isolated(pos, square)) v -= 56;\n  else if ($isolated(pos, square)) v -= 15;\n  else if ($backward(pos, square)) v -= 24;\n  v -= $doubled(pos, square) * 56;\n  v += $connected(pos, square) ?  $connected_bonus(pos, square) * ($rank(pos, square) - 3) / 4 << 0 : 0;\n  v -= 27 * $weak_unopposed_pawn(pos, square);\n  v -= 56 * $weak_lever(pos, square);\n  v += [0,-4,4][$blocked(pos, square)];\n  return v;\n}","links":[],"eval":true,"squares":1,"highlight":2,"forwhite":true,"graph":false,"elo":null});
 data.push({"name":"Rule50","group":"","text":"<b>$</b>","code":"function $$(pos, square) {\n  if (square != null) return 0;\n  return pos.m[0];\n}","links":[],"eval":true,"squares":0,"highlight":0,"forwhite":false,"graph":false,"elo":null});
-</script> 
+</script>
 
 </body></html>
