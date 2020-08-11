@@ -2507,7 +2507,7 @@ function estimateEntropy() {
         const pi = ((((j / hd) >> 0) - 1) % 641);
         const piece = (pi / 64) >> 0;
         const rank = ((pi % 64) / 8) >> 0;
-        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1)) { w[j] = 0; continue; }
+        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1) || ((((((j / hd) >> 0) - 1) / 641) >> 0) == pi % 64)) { w[j] = 0; continue; }
         const a1 = j-hd >= 0 && ((((j/hd)>>0) - 1) % 64) > 1 ? w[j-hd] : 0;
         const a2 = j-7*hd >= 0  && ((((j/hd)>>0)- 1) % 64) > 7? w[j-7*hd] : a1;
         const a3 = j-8*hd >= 0  && ((((j/hd)>>0) - 1) % 64) > 8? w[j-8*hd] : a1;
