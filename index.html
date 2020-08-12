@@ -938,6 +938,22 @@
             user-select: none;
         }
         #nnueAct .layer { width: 672px; line-height: 0; margin-bottom: 18px; }
+        #ntCanvas {
+            position: absolute;
+            width: 670px;
+            height: 334px;
+            background-color: black;
+            user-select: none;
+            top: 0;
+            left: 0;
+            border: 1px solid black;
+        }
+        .ntBtn { position: absolute; top: 4px; right: 0; font-size: 0; }
+        .ntBtn > div:hover { background-color: white; color: black; }
+        .ntBtn > div { display: inline-block; text-align: center; color: white; cursor: pointer; line-height: 18px;
+            user-select: none; -moz-user-select: -moz-none; border-radius: 2px; border: solid 1px #a2a9b1;
+            background-color: black; margin-right: 4px; padding: 0 4px 0 4px; height: 18px; font-size: 11px;
+            font-weight: bold; }
     </style>
 </head>
 <body>
@@ -1076,8 +1092,18 @@
                 </div>
                 <div style="float:left;">
                 <h2><span>Neuron activation</span></h2>
-                <div id="nnueAct"></div>
-                </div>
+                <div style="position:relative;">
+                    <div id="nnueAct"></div>
+                    <div id="neuronTooltip" style="display:none;">
+                        <canvas id="ntCanvas" width="670" height="334"></canvas>
+                        <div class="ntBtn">
+                            <div onclick="neuronShowWeights(null,-1);">&lt;</div>
+                            <div onclick="neuronShowWeights(null,+1);">&gt;</div>
+                            <div onclick="document.getElementById('neuronTooltip').saf=!document.getElementById('neuronTooltip').saf;this.innerText=document.getElementById('neuronTooltip').saf?'HIDE ACTIVE FEATURES':'SHOW ACTIVE FEATURES';neuronShowWeights();" style="min-width:139px;">SHOW ACTIVE FEATURES</div>
+                            <div onclick="document.getElementById('neuronTooltip').style.display = 'none';">CLOSE</div>
+                        </div>
+                    </div>
+                </div></div>
                 <div style="clear:both"></div>
                 </div>
             </div>
@@ -1955,6 +1981,7 @@ function showBoard() {
         }
         var elemact = document.getElementById('nnueAct');
         while (elemact.firstChild) elemact.removeChild(elemact.firstChild);
+        if (document.getElementById('neuronTooltip').style.display != "none") neuronShowWeights();
         var network = _nnue_network;
         for (var i = 0; i < network.length; i++) if (network[i].act != null) {
             var div = document.createElement('div');
@@ -1967,10 +1994,10 @@ function showBoard() {
                 div2.style.backgroundColor = "hsl(214, 47%, "+c+"%)";
                 div2.style.color = parseFloat((network[i].act[j] / 127).toFixed(1)) >= 0.5 ? "#ffffff" : "#000000";
                 div2.innerText = network[i].act[j] > 0 ? network[i].act[j] : "";
-                if (network[i].act[j] > 0) {
-                    div2.onmouseover = neuronHighlight;
-                    div2.onmouseout = neuronHighlightEnd;
-                }
+                div2.onmouseover = neuronHighlight;
+                div2.onmouseout = neuronHighlightEnd;
+                div2.title = "NEURON " + (j+1);
+                if (i == 0) { div2.onclick = function () { neuronShowWeights(this.id); }; div2.style.cursor = "pointer"; }
                 div.appendChild(div2);
             }
             elemact.appendChild(div);
@@ -2496,6 +2523,85 @@ function chessboardOnDblClick(e) {
   document.getElementById('chessboard1').onclick = chessboardOnDblClick;
   if (timer) window.clearTimeout(timer);
   timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
+}
+
+function neuronShowWeights(nid, step) {
+    if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
+    var thisid = nid == null ? document.getElementById('neuronTooltip').nid : nid;
+    const hd = 256;
+    var nj = parseInt(thisid.split("_")[2]);
+    if (step != null) nj = (nj + 2 * hd + step) % (2 * hd);
+    document.getElementById('neuronTooltip').nid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
+    var saf = document.getElementById('neuronTooltip').saf || false;
+    var pos = parseFEN(document.getElementById('fen').innerHTML);
+    var w = _nnue_network[0].weights;
+    var ctx = document.getElementById('ntCanvas').getContext("2d");
+    ctx.clearRect(0, 0, 670, 334);
+    var p = pos.w ^ (nj < hd);
+    var features = saf ? nnuePosFeatures(!p ? pos : colorflip(pos), p) : [], circles = [];
+    for (var j = nj % hd; j < w.length; j += hd) {
+        var c = Math.min(100, Math.max(0, 50 + w[j]));
+        const pi = ((((j / hd) >> 0) - 1) % 641), ki = (((((j / hd) >> 0) - 1) / 641) >> 0);
+        const piece = (pi / 64) >> 0;
+        const rank = ((pi % 64) / 8) >> 0;
+        if (pi == 640) continue;
+        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1) || (ki == pi % 64)) {
+            ctx.fillStyle = "rgba(0,0,0,1)";
+        } else {
+            ctx.fillStyle = "hsl(214, 47%, "+c+"%)";
+        }
+        var x, y;
+        if (p == 0) x = (ki % 8) * 2 + (pi % 8) * 16 + ((piece / 2) >> 0) * (128 + 1);
+        else x = (7 - (ki % 8)) * 2 + (7 - (pi % 8)) * 16 + ((piece / 2) >> 0) * (128 + 1);
+        if (p == 0) y = (7 - ((ki / 8) >> 0)) * 2 + (7 - rank) * 16 + (piece % 2) * (128 + 1);
+        else y = ((ki / 8) >> 0) * 2 + rank * 16 + (piece % 2) * (128 + 1);
+        x += 25; y += 55;
+        ctx.fillRect(x, y, 2, 2);
+        if (saf && features.indexOf((j / hd) >> 0) >= 0) circles.push([x+1,y+1,w[j]]);
+    }
+    var total = 0;
+    for (var j = 0; j < circles.length; j ++) {
+        ctx.beginPath(); ctx.arc(circles[j][0], circles[j][1], 3, 0, 2 * Math.PI, false);
+        ctx.lineWidth = 3.5; ctx.strokeStyle = '#000000'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(circles[j][0], circles[j][1], 3, 0, 2 * Math.PI, false);
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#ffff00'; ctx.stroke();
+        var text = (circles[j][2] > 0 ? "+" : circles[j][2] < 0 ? "-" : "") + Math.abs(circles[j][2]);
+        var x = circles[j][0], y = circles[j][1]+10;
+        ctx.font = "bold 8px sans-serif"; ctx.textAlign = "center";  ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
+        ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
+        total += circles[j][2];
+    }
+    if (saf)
+    {
+        var b = _nnue_network[0].biases[nj % hd];
+        total += b;
+        var text = "BIAS: " +  (b > 0 ? "+" : b < 0 ? "-" : "") + Math.abs(b), x = 8, y = 2 * 129 + 55 + 15;
+        ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left";  ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
+        ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
+        text = " TOTAL: " + total; x = 662; y = 2 * 129 + 55 + 15;
+        ctx.font = "bold 8px sans-serif"; ctx.textAlign = "right";  ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
+        ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
+    }
+    ctx.fillStyle = "white"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("NEURON " + (nj+1) + " - ACTIVATION: " + _nnue_network[0].act[nj] + " - WEIGHTS RELATIVE TO " + (p == 0 ? "WHITE" : "BLACK") + " KING" , 8, 17);
+    ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("PAWN", 25 + 64 + 129 * 0, 47);
+    ctx.fillText("KNIGHT", 25 + 64 + 129 * 1, 47);
+    ctx.fillText("BISHOP", 25 + 64 + 129 * 2, 47);
+    ctx.fillText("ROOK", 25 + 64 + 129 * 3, 47);
+    ctx.fillText("QUEEN", 25 + 64 + 129 * 4, 47);
+    ctx.save();
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.fillText(p == 0 ? "WHITE" : "BLACK", -55 -64, 17);
+    ctx.fillText(p == 0 ? "BLACK" : "WHITE", -55 -64 - 128 - 1, 17);
+    ctx.restore();
+
+    document.getElementById('neuronTooltip').style.display = "";
+    document.getElementById('ntCanvas').onclick = function() { document.getElementById('neuronTooltip').style.display = "none"; };
 }
 
 function estimateEntropy() {
