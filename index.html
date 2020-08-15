@@ -953,7 +953,7 @@
         .ntBtn > div { display: inline-block; text-align: center; color: white; cursor: pointer; line-height: 18px;
             user-select: none; -moz-user-select: -moz-none; border-radius: 2px; border: solid 1px #a2a9b1;
             background-color: black; margin-right: 4px; padding: 0 4px 0 4px; height: 18px; font-size: 11px;
-            font-weight: bold; }
+            font-weight: bold; min-width: 10px; }
     </style>
 </head>
 <body>
@@ -1097,9 +1097,10 @@
                     <div id="neuronTooltip" style="display:none;">
                         <canvas id="ntCanvas" width="670" height="334"></canvas>
                         <div class="ntBtn">
-                            <div onclick="neuronShowWeights(null,-1);">&lt;</div>
-                            <div onclick="neuronShowWeights(null,+1);">&gt;</div>
+                            <div onclick="neuronShowWeights(null,-1);" title="Previous">&lt;</div>
+                            <div onclick="neuronShowWeights(null,+1);" title="Next">&gt;</div>
                             <div onclick="document.getElementById('neuronTooltip').saf=!document.getElementById('neuronTooltip').saf;this.innerText=document.getElementById('neuronTooltip').saf?'HIDE ACTIVE FEATURES':'SHOW ACTIVE FEATURES';neuronShowWeights();" style="min-width:139px;">SHOW ACTIVE FEATURES</div>
+                            <div onclick="document.getElementById('neuronTooltip').per=!document.getElementById('neuronTooltip').per;this.title=document.getElementById('neuronTooltip').per?'Absolute coordinates':'Coordinates relative to king';this.innerText=document.getElementById('neuronTooltip').per?'A':'K';neuronShowWeights();" title="Coordinates relative to king">K</div>
                             <div onclick="document.getElementById('neuronTooltip').style.display = 'none';">CLOSE</div>
                         </div>
                     </div>
@@ -2533,6 +2534,7 @@ function neuronShowWeights(nid, step) {
     if (step != null) nj = (nj + 2 * hd + step) % (2 * hd);
     document.getElementById('neuronTooltip').nid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
     var saf = document.getElementById('neuronTooltip').saf || false;
+    var per = document.getElementById('neuronTooltip').per || false;
     var pos = parseFEN(document.getElementById('fen').innerHTML);
     var w = _nnue_network[0].weights;
     var ctx = document.getElementById('ntCanvas').getContext("2d");
@@ -2545,17 +2547,27 @@ function neuronShowWeights(nid, step) {
         const piece = (pi / 64) >> 0;
         const rank = ((pi % 64) / 8) >> 0;
         if (pi == 640) continue;
-        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1) || (ki == pi % 64)) {
+        if ((rank == 0 || rank == 7) && (piece < 2) || (ki == pi % 64)) {
             ctx.fillStyle = "rgba(0,0,0,1)";
         } else {
-            ctx.fillStyle = "hsl(214, 47%, "+c+"%)";
+            ctx.fillStyle = "hsl("+(per?347:214)+", 47%, "+c+"%)";
         }
-        var x, y;
-        if (p == 0) x = (ki % 8) * 2 + (pi % 8) * 16 + ((piece / 2) >> 0) * (128 + 1);
-        else x = (7 - (ki % 8)) * 2 + (7 - (pi % 8)) * 16 + ((piece / 2) >> 0) * (128 + 1);
-        if (p == 0) y = (7 - ((ki / 8) >> 0)) * 2 + (7 - rank) * 16 + (piece % 2) * (128 + 1);
-        else y = ((ki / 8) >> 0) * 2 + rank * 16 + (piece % 2) * (128 + 1);
-        x += 25; y += 55;
+        
+        const blpos = {x:((piece / 2) >> 0),y:(piece % 2)};
+        var kipos = {x:ki % 8,y:(ki / 8) >> 0};
+        var pipos = {x:pi % 8,y:rank};
+        if (p != 0) { kipos = {x:7-kipos.x,y:7-kipos.y}; pipos = {x:7-pipos.x,y:7-pipos.y}; }
+        function perindex(pc, kc) {
+            return 63 - ([0,1,3,6,10,15,21,28,36,43,49,54,58,61,63][7 + pc - kc] + Math.min(pc, kc));
+        }
+        function perindexp(pc, kc) {
+            if (pc == 0) return 7; else if (pc == 7) return 56;
+            return 63 - ([7,8,9,11,14,18,23,29,35,41,46,50,53,55,56][7 + pc - kc] + Math.min(pc, kc) - (pc <= kc ? 1 : 0));
+        }
+        const inpos = per ? {x:63-perindex(pipos.x,kipos.x),y:piece < 2 ? perindexp(pipos.y,kipos.y) : perindex(pipos.y,kipos.y)}
+                          : {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
+        const x = inpos.x * 2 + blpos.x * (128 + 1) + 25;
+        const y = inpos.y * 2 + blpos.y * (128 + 1) + 55;
         ctx.fillRect(x, y, 2, 2);
         if (saf && features.indexOf((j / hd) >> 0) >= 0) circles.push([x+1,y+1,w[j]]);
     }
