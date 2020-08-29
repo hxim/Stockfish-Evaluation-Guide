@@ -2003,6 +2003,10 @@ function showBoard() {
             }
             elemact.appendChild(div);
         }
+        var a = document.createElement('a');
+        a.innerText = "download weights.png";
+        a.onclick = downloadWeightsPng;
+        elemact.appendChild(a);
     }
   } else document.getElementById('thumb4').style.display = "none";
 
@@ -2614,6 +2618,57 @@ function neuronShowWeights(nid, step) {
 
     document.getElementById('neuronTooltip').style.display = "";
     document.getElementById('ntCanvas').onclick = function() { document.getElementById('neuronTooltip').style.display = "none"; };
+}
+
+function downloadWeightsPng() {
+    if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
+    const hd = 256, n = _nnue_network, canvas = document. createElement("canvas");
+    canvas.width = 4096; canvas.height = 2434;
+    var ctx = canvas.getContext("2d"), imgData = ctx.createImageData(canvas.width, canvas.height);
+    for (var j = 0; j < n[0].weights.length; j ++) {
+        const pi = ((((j / hd) >> 0) - 1) % 641), ki = (((((j / hd) >> 0) - 1) / 641) >> 0);
+        const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
+        if (pi == 640 || (rank == 0 || rank == 7) && (piece == 0 || piece == 1)) continue;
+        
+        var r=0,g=0,b=0;
+        if (ki != pi % 64) {
+            var v = -n[0].weights[j]*2;
+            if (v >= 0 && v < 1020) { r=v<=255?v:v<=512?-v+510:0; g=v<=255?v:v<=765?255:-v+1020;b=v<=255?v:v<=510?255:v<=765?-v+765:0; }
+            else if (v < 0 && v > -1020) { r=v>=-255?-v:v>=-765?255:v+1020;g=v>=-255?-v:v>=-510?v+510:0;b=v>=-510?0:v>=-765?-v-510:v+1020; }
+            else { alert("error weight too big: "+ val); return; }
+        }
+
+        var kipos = {x:ki % 8,y:(ki / 8) >> 0};
+        var pipos = {x:pi % 8,y:rank};
+        const inpos = {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
+        const d = piece < 2 ? -8 : 48 + (((piece / 2) >> 0) - 1) * 64;
+        var x = inpos.x + 128 * ((j % hd) % 32) + (piece % 2)*64, y = inpos.y + d + 304 * (((j % hd) / 32)>>0);
+        var ii = (x + y * 4096) * 4;
+        imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
+    }
+
+    var i2 = (4096 * 2432) * 4;
+    function wa(a) {
+        var ba = new Uint8Array(a.buffer);
+        for (var i = 0; i < ba.length; i++) {
+            imgData.data[i2++] = ba[i];
+            if (i2 % 4 == 3) imgData.data[i2++] = 255;
+        }
+    }
+    for (var i = 0; i < n.length; i++) {
+        if (n[i].name == "FeatureTransformer") { wa(n[i].biases); }
+        else if (n[i].name == "AffineTransform") { wa(n[i].biases); wa(n[i].weights); }
+    }
+    while (i2 % 4 != 0) { imgData.data[i2] = 255; i2++; }
+    ctx.putImageData(imgData, 0, 0);
+
+    var element = document.createElement('a');
+    element.setAttribute('href', canvas.toDataURL('image/png'));
+    element.setAttribute('download', 'weights.png');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 function estimateEntropy() {
