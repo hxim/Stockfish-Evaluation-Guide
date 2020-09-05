@@ -2533,7 +2533,7 @@ function chessboardOnDblClick(e) {
 function neuronShowWeights(nid, step) {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
     var thisid = nid == null ? document.getElementById('neuronTooltip').nid : nid;
-    const hd = 256;
+    const hd = _nnue_network[0].output / 2;
     var nj = parseInt(thisid.split("_")[2]);
     if (step != null) nj = (nj + 2 * hd + step) % (2 * hd);
     document.getElementById('neuronTooltip').nid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
@@ -2622,8 +2622,14 @@ function neuronShowWeights(nid, step) {
 
 function downloadWeightsPng() {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
-    const hd = 256, n = _nnue_network, canvas = document. createElement("canvas");
-    canvas.width = 4096; canvas.height = 2434;
+    const n = _nnue_network, hd = n[0].output / 2, canvas = document. createElement("canvas");
+    var addlines = 0;
+    for (var i = 0; i < n.length; i++) {
+        if (n[i].name == "FeatureTransformer") { addlines += n[i].biases.length * 2; }
+        else if (n[i].name == "AffineTransform") { addlines += n[i].biases.length * 4; addlines += n[i].weights.length; }
+    }
+    addlines = Math.ceil((addlines / 3) / 4096);
+    canvas.width = 4096; canvas.height = addlines + 304 * (hd / 32);
     var ctx = canvas.getContext("2d"), imgData = ctx.createImageData(canvas.width, canvas.height);
     for (var j = 0; j < n[0].weights.length; j ++) {
         const pi = ((((j / hd) >> 0) - 1) % 641), ki = (((((j / hd) >> 0) - 1) / 641) >> 0);
@@ -2647,7 +2653,7 @@ function downloadWeightsPng() {
         imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
     }
 
-    var i2 = (4096 * 2432) * 4;
+    var i2 = (4096 * (canvas.height - addlines)) * 4;
     function wa(a) {
         var ba = new Uint8Array(a.buffer);
         for (var i = 0; i < ba.length; i++) {
@@ -2676,7 +2682,7 @@ function estimateEntropy() {
     var w = _nnue_network[0].weights, len = _nnue_network[0].fileLen;
     var cnt = new Int32Array(65536), sum = 0, last = 0;
     for (var j = 0; j < w.length; j++) {
-        const hd = 256;
+        const hd = _nnue_network[0].output / 2;
         const pi = ((((j / hd) >> 0) - 1) % 641);
         const piece = (pi / 64) >> 0;
         const rank = ((pi % 64) / 8) >> 0;
@@ -2711,8 +2717,10 @@ function nnueFileLoad(e) {
         var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], archSize = header[2];
         if (version != 0x7AF32F16) { alert("unsupported network version"); return; }
         var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize))), ent = "-";
-        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:512},
-                       {name:"AffineTransform",input:512,output:32}, {name:"ClippedReLU"},
+        var ntype = 512;
+        for (var i = 1; i <= 64; i++) if (arch.indexOf("InputSlice["+(32*i)+"(0:"+(32*i)+")]") >= 0) ntype = 32*i;
+        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:ntype},
+                       {name:"AffineTransform",input:ntype,output:32}, {name:"ClippedReLU"},
                        {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
                        {name:"AffineTransform",input:32,output:1}]
         for (var i = 0; i < network.length; i++) {
