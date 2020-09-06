@@ -2546,7 +2546,7 @@ function neuronTooltipShow(display) {
 function setupNeuronTooltip() {
   var c = [0, 0], div = document.getElementById('neuronTooltip'), oldmouseup = null, oldmousemove = null;
   document.getElementById('ntCanvas').onmousedown = dragMouseDown;
-  document.getElementById('ntCanvas').ondblclick = function() { div.style.display = 'none'; };
+  document.getElementById('ntCanvas').ondblclick = function() { neuronTooltipShow(false); };
   function dragMouseDown(e) {
     e = e || window.event;
     e.preventDefault();
