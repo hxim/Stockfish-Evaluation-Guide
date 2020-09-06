@@ -551,7 +551,6 @@
                 position: relative;
                 line-height: 1.6;
                 font-size: 0.875em;
-                z-index: 0;
                 margin-top: 1.175em;
             }
 
@@ -954,6 +953,7 @@
             user-select: none; -moz-user-select: -moz-none; border-radius: 2px; border: solid 1px #a2a9b1;
             background-color: black; margin-right: 4px; padding: 0 4px 0 4px; height: 18px; font-size: 11px;
             font-weight: bold; min-width: 10px; }
+        #neuronTooltip { position: absolute; top: 0; left: 0; width: 672px; height: 336px; z-index: 101; }
     </style>
 </head>
 <body>
@@ -1094,16 +1094,16 @@
                 <h2><span>Neuron activation</span></h2>
                 <div style="position:relative;">
                     <div id="nnueAct"></div>
-                    <div id="neuronTooltip" style="display:none;">
+                    <div id="neuronTooltip" style="display:none;"><div style="position:relative;">
                         <canvas id="ntCanvas" width="670" height="334"></canvas>
                         <div class="ntBtn">
                             <div onclick="neuronShowWeights(null,-1);" title="Previous">&lt;</div>
                             <div onclick="neuronShowWeights(null,+1);" title="Next">&gt;</div>
                             <div onclick="document.getElementById('neuronTooltip').saf=!document.getElementById('neuronTooltip').saf;this.innerText=document.getElementById('neuronTooltip').saf?'HIDE ACTIVE FEATURES':'SHOW ACTIVE FEATURES';neuronShowWeights();" style="min-width:139px;">SHOW ACTIVE FEATURES</div>
                             <div onclick="document.getElementById('neuronTooltip').per=!document.getElementById('neuronTooltip').per;this.title=document.getElementById('neuronTooltip').per?'Absolute coordinates':'Coordinates relative to king';this.innerText=document.getElementById('neuronTooltip').per?'A':'K';neuronShowWeights();" title="Coordinates relative to king">K</div>
-                            <div onclick="document.getElementById('neuronTooltip').style.display = 'none';">CLOSE</div>
+                            <div onclick="neuronTooltipShow(false);">CLOSE</div>
                         </div>
-                    </div>
+                    </div></div></div>
                 </div></div>
                 <div style="clear:both"></div>
                 </div>
@@ -1918,6 +1918,7 @@ function neuronHighlight() {
             var c = Math.max(-255, Math.min(255, col[x + (flip ? 7 - y : y) * 8] * 255));
             div.style.backgroundColor = c == 0 ? "" : c > 0 ? "rgb(255,255,"+(255-c)+")" : "rgb("+(255+c)+",255,255)";
         }
+        if (document.getElementById('neuronTooltip').style.display == "" && document.getElementById('neuronTooltip').ctrl == "1") neuronShowWeights(this.id);
     } else {
         var net = _nnue_network[i - 1], act = _nnue_network[i - 2].act;
         var col = new Array(64).fill(0);
@@ -1982,7 +1983,6 @@ function showBoard() {
         }
         var elemact = document.getElementById('nnueAct');
         while (elemact.firstChild) elemact.removeChild(elemact.firstChild);
-        if (document.getElementById('neuronTooltip').style.display != "none") neuronShowWeights();
         var network = _nnue_network;
         for (var i = 0; i < network.length; i++) if (network[i].act != null) {
             var div = document.createElement('div');
@@ -1998,11 +1998,17 @@ function showBoard() {
                 div2.onmouseover = neuronHighlight;
                 div2.onmouseout = neuronHighlightEnd;
                 div2.title = "NEURON " + (j+1);
-                if (i == 0) { div2.onclick = function () { neuronShowWeights(this.id); }; div2.style.cursor = "pointer"; }
+                if (i == 0) { div2.onclick = function (e) { 
+                    document.getElementById('neuronTooltip').ctrl = e.ctrlKey ? "1" : "0";
+                    if (document.getElementById('neuronTooltip').style.display == "" &&
+                        document.getElementById('neuronTooltip').nid == this.id) neuronTooltipShow(false);
+                    else neuronShowWeights(this.id);
+                }; div2.style.cursor = "pointer"; }
                 div.appendChild(div2);
             }
             elemact.appendChild(div);
         }
+        if (document.getElementById('neuronTooltip').style.display != "none") neuronShowWeights();
         var a = document.createElement('a');
         a.innerText = "download weights.png";
         a.onclick = downloadWeightsPng;
@@ -2530,13 +2536,47 @@ function chessboardOnDblClick(e) {
   timer = window.setTimeout(function() { document.getElementById('chessboard1').onclick = null; }, 1000);
 }
 
+function neuronTooltipShow(display) {
+    document.getElementById('neuronTooltip').style.display = display ? '' : 'none';
+    if (display == false) {
+        const oldnid = document.getElementById('neuronTooltip').nid;
+        if (oldnid != null) document.getElementById(oldnid).style.boxShadow = "";
+    }
+}
+function setupNeuronTooltip() {
+  var c = [0, 0], div = document.getElementById('neuronTooltip'), oldmouseup = null, oldmousemove = null;
+  document.getElementById('ntCanvas').onmousedown = dragMouseDown;
+  document.getElementById('ntCanvas').ondblclick = function() { div.style.display = 'none'; };
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    c = [e.clientX, e.clientY];
+    oldmouseup = document.onmouseup;
+    oldmousemove = document.onmousemove;
+    document.onmouseup = function () { document.onmouseup = oldmouseup; document.onmousemove = oldmousemove; div.style.cursor = ""; };
+    document.onmousemove = elementDrag;
+  }
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    div.style.left = (div.offsetLeft - (c[0] - e.clientX)) + "px";
+    div.style.top = (div.offsetTop - (c[1] - e.clientY)) + "px";
+    div.style.cursor = "move";
+    c = [e.clientX, e.clientY];
+  }
+}
+
 function neuronShowWeights(nid, step) {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
-    var thisid = nid == null ? document.getElementById('neuronTooltip').nid : nid;
+    const oldnid = document.getElementById('neuronTooltip').nid;
+    var thisid = nid == null ? oldnid : nid;
     const hd = _nnue_network[0].output / 2;
     var nj = parseInt(thisid.split("_")[2]);
     if (step != null) nj = (nj + 2 * hd + step) % (2 * hd);
-    document.getElementById('neuronTooltip').nid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
+    thisid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
+    document.getElementById('neuronTooltip').nid = thisid;
+    if (oldnid != null && oldnid.length > 0 && document.getElementById(oldnid) != null) document.getElementById(oldnid).style.boxShadow = "";
+    if (document.getElementById(thisid) != null) document.getElementById(thisid).style.boxShadow = "0 0 2px 2px red";
     var saf = document.getElementById('neuronTooltip').saf || false;
     var per = document.getElementById('neuronTooltip').per || false;
     var pos = parseFEN(document.getElementById('fen').innerHTML);
@@ -2616,8 +2656,7 @@ function neuronShowWeights(nid, step) {
     ctx.fillText(p == 0 ? "BLACK" : "WHITE", -55 -64 - 128 - 1, 17);
     ctx.restore();
 
-    document.getElementById('neuronTooltip').style.display = "";
-    document.getElementById('ntCanvas').onclick = function() { document.getElementById('neuronTooltip').style.display = "none"; };
+    neuronTooltipShow(true);
 }
 
 function downloadWeightsPng() {
@@ -2748,6 +2787,7 @@ function nnueFileLoad(e) {
     };
     fr.onerror = function () { alert("error reading file"); }
     fr.readAsArrayBuffer(e.target.files[0]);
+    setupNeuronTooltip();
 }
 
 function nnuePosFeatures(pos, flip) {
