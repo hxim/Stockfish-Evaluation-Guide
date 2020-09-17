@@ -2584,7 +2584,7 @@ function neuronShowWeights(nid, step) {
     var ctx = document.getElementById('ntCanvas').getContext("2d");
     ctx.clearRect(0, 0, 670, 334);
     var p = pos.w ^ (nj < hd);
-    var features = saf ? nnuePosFeatures(!p ? pos : colorflip(pos), p) : [], circles = [];
+    var features = saf ? nnuePosFeatures(!p ? pos : colorflip(pos), !_nnue_network[0].flip && p) : [], circles = [];
     for (var j = nj % hd; j < w.length; j += hd) {
         var c = Math.min(100, Math.max(0, 50 + w[j]));
         const pi = ((((j / hd) >> 0) - 1) % 641), ki = (((((j / hd) >> 0) - 1) / 641) >> 0);
@@ -2600,7 +2600,10 @@ function neuronShowWeights(nid, step) {
         const blpos = {x:((piece / 2) >> 0),y:(piece % 2)};
         var kipos = {x:ki % 8,y:(ki / 8) >> 0};
         var pipos = {x:pi % 8,y:rank};
-        if (p != 0) { kipos = {x:7-kipos.x,y:7-kipos.y}; pipos = {x:7-pipos.x,y:7-pipos.y}; }
+        if (_nnue_network[0].flip)
+            { if (p != 0) { kipos = {x:kipos.x,y:7-kipos.y}; pipos = {x:pipos.x,y:7-pipos.y}; } }
+        else 
+            { if (p != 0) { kipos = {x:7-kipos.x,y:7-kipos.y}; pipos = {x:7-pipos.x,y:7-pipos.y}; } }
         function perindex(pc, kc) {
             return 63 - ([0,1,3,6,10,15,21,28,36,43,49,54,58,61,63][7 + pc - kc] + Math.min(pc, kc));
         }
@@ -2754,11 +2757,11 @@ function nnueFileLoad(e) {
         var a = new Int8Array(fr.result), fp = a.byteOffset;
         function getBuffer(size) { fp += size; return a.buffer.slice(fp - size, fp); }
         var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], archSize = header[2];
-        if (version != 0x7AF32F16) { alert("unsupported network version"); return; }
+        if (version != 0x7AF32F16 && version != 0x7AF32F17) { alert("unsupported network version"); return; }
         var arch = String.fromCharCode.apply(String, new Uint8Array(getBuffer(archSize))), ent = "-";
         var ntype = 512;
         for (var i = 1; i <= 64; i++) if (arch.indexOf("InputSlice["+(32*i)+"(0:"+(32*i)+")]") >= 0) ntype = 32*i;
-        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:ntype},
+        var network = [{name:"FeatureTransformer",input:64 * (10 * 64 + 1),output:ntype,flip:version==0x7AF32F17},
                        {name:"AffineTransform",input:ntype,output:32}, {name:"ClippedReLU"},
                        {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
                        {name:"AffineTransform",input:32,output:1}]
@@ -2810,7 +2813,7 @@ function nnueEvaluate(pos, saveAct) {
             var hd = network[i].output / 2, accumulation=[[],[]];
             for (var p = 0; p < 2; p++) {
                 for (var j = 0; j < hd; j++) accumulation[p].push(network[i].biases[j]);
-                var features = nnuePosFeatures(p == 0 ? pos : colorflip(pos), p != 0);
+                var features = nnuePosFeatures(p == 0 ? pos : colorflip(pos), p != 0 && !network[i].flip);
                 for (var k = 0; k < features.length; k++) {
                     for (var j = 0; j < hd; j++) accumulation[p][j] += network[i].weights[hd * features[k] + j];
                 }
