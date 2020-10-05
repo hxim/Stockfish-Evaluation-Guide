@@ -2011,7 +2011,7 @@ function showBoard() {
         if (document.getElementById('neuronTooltip').style.display != "none") neuronShowWeights();
         var a = document.createElement('a');
         a.innerText = "download weights.png";
-        a.onclick = downloadWeightsPng;
+        a.onclick = function (e) { downloadWeightsPng(e.ctrlKey); };
         elemact.appendChild(a);
     }
   } else document.getElementById('thumb4').style.display = "none";
@@ -2662,7 +2662,7 @@ function neuronShowWeights(nid, step) {
     neuronTooltipShow(true);
 }
 
-function downloadWeightsPng() {
+function downloadWeightsPng(reorder) {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
     const n = _nnue_network, hd = n[0].output / 2, canvas = document. createElement("canvas");
     var addlines = 0;
@@ -2690,7 +2690,8 @@ function downloadWeightsPng() {
         var pipos = {x:pi % 8,y:rank};
         const inpos = {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
         const d = piece < 2 ? -8 : 48 + (((piece / 2) >> 0) - 1) * 64;
-        var x = inpos.x + 128 * ((j % hd) % 32) + (piece % 2)*64, y = inpos.y + d + 304 * (((j % hd) / 32)>>0);
+        var jhd = reorder ? n[1].sigi[j % hd] : j % hd;
+        var x = inpos.x + 128 * ((jhd) % 32) + (piece % 2)*64, y = inpos.y + d + 304 * (((jhd) / 32)>>0);
         var ii = (x + y * 4096) * 4;
         imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
     }
@@ -2778,6 +2779,32 @@ function nnueFileLoad(e) {
                 network[i].weights = new Int8Array(getBuffer(network[i].output * network[i].input));
             }
         }
+        for (var i = network.length-1; i >= 1; i--) {
+            if (network[i].name == "AffineTransform") {
+                var odim = network[i].output, idim = network[i].input;
+                network[i].sig = [];
+                for (var k = 0; k < idim; k++) {
+                    var sig = 0;
+                    for (var j = 0; j < odim; j++) {
+                        var p = i == network.length-1 ? 1 : network[i+2].sig[j];
+                        sig += network[i].weights[j * idim + k] * p;
+                    }
+                    network[i].sig.push(sig);
+                }
+                if (i == 1) {
+                    var len = network[i].sig.length / 2;
+                    index = new Array(len);
+                    for (var k = 0; k < len; ++k) index[k] = k;
+                    index.sort(function (a, b) { return Math.abs(network[i].sig[a])+Math.abs(network[i].sig[a+len]) > Math.abs(network[i].sig[b])+Math.abs(network[i].sig[b+len]) ? -1 : 1; });
+                    
+                    network[i].sigi = new Array(len * 2);
+                    for (var k = 0; k < len; ++k) {
+                        network[i].sigi[index[k]] = k;
+                        network[i].sigi[index[k] + len] = k + len;
+                    }
+                }
+            }
+        }        
         if (fp - a.byteOffset != a.length) { alert("error in network file"); return; }
         _nnue_network = network;
         document.getElementById("nnueInfoFile").innerText = e.target.files[0].name;
