@@ -954,6 +954,13 @@
             background-color: black; margin-right: 4px; padding: 0 4px 0 4px; height: 18px; font-size: 11px;
             font-weight: bold; min-width: 10px; }
         #neuronTooltip { position: absolute; top: 0; left: 0; width: 840px; height: 336px; z-index: 101; }
+        .nnuePsqtButton { height: 18px; display: inline-block; border-radius: 4px; border: 1px solid black; margin: 0 1px 1px 0;
+            font-size: 11px; line-height: 18px; vertical-align: middle; color: black; background-color: white;
+            font-weight: bold; text-align: center; cursor: pointer; user-select: none; padding: 0 8px; }
+        .nnuePsqtButton:hover { background-color: #f2f2f2; }
+        #nnueTotal > span { display: inline-block; border-radius: 4px; border: 1px solid #4175b7; margin: 0 1px 1px 0;
+            font-size: 11px; line-height: 18px; vertical-align: middle; color: white; background-color: #4175b7;
+            font-weight: bold; padding: 0 8px; }
     </style>
 </head>
 <body>
@@ -1070,11 +1077,10 @@
         </div>
         <div id="bodyContentNNUE" style="display: none;">
             <div class="contentText">
-                <p>Stockfish NNUE is a port of a shogi neural network named NNUE (efficiently updateable neural network backwards) to Stockfish. In this tool only HalfKAv2 512x2-16-32-1 with multiple PSQT outputs and multiple subnetworks is currently supported (<a href="https://github.com/official-stockfish/Stockfish/commit/e8d64af1230fdac65bb0da246df3e7abe82e0838">more info here</a>).</p>
+                <p>Stockfish NNUE is a port of a shogi neural network named NNUE (efficiently updateable neural network backwards) to Stockfish. In this tool only HalfKP 256x2-32-32-1 (rotate and flip) and HalfKAv2 512x2-16-32-1 with multiple PSQT outputs and multiple subnetworks (new) is currently supported (<a href="https://github.com/official-stockfish/Stockfish/commit/e8d64af1230fdac65bb0da246df3e7abe82e0838">more info here</a>).</p>
                 <h2><span>Neural network</span></h2>
                 <p>To use NNUE evaluation load supported neural network here: <input type="file" accept=".nnue" onchange="nnueFileLoad(event)"><br/>You can download some networks here: <a href="https://tests.stockfishchess.org/nns">https://tests.stockfishchess.org/nns</a></p>
-                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><span id="nnueInfoHash" style="font-size:10px;color:#666666;"></span><br/><b>Description:</b> <span id="nnueInfoDesc">-</span>
-                </p>
+                <p><b>Current neural network:</b> <span id="nnueInfoFile">-</span><span id="nnueInfoHash" style="font-size:10px;color:#666666;"></span><br/><b>Description:</b> <span id="nnueInfoDesc">-</span><div id="nnuePsqt" style="display:none;"><span class="nnuePsqtButton" onclick="psqtShowWeights(true);">PSQT WHITE</span><span class="nnuePsqtButton" onclick="psqtShowWeights(false);">PSQT BLACK</span></div><div id="nnueTotal" style="display:none;"></div>
                 <div>
                 <div style="float:left;max-width:450px;margin-right:1.5em;"><h2><span>Per square value estimation</span></h2>
                 <p>This table shows how much NNUE evaluation in pawns changes after piece is removed from chessboard.</p>
@@ -1982,7 +1988,7 @@ function showBoard() {
         }
         var elemact = document.getElementById('nnueAct');
         while (elemact.firstChild) elemact.removeChild(elemact.firstChild);
-        var network = _nnue_network;
+        var network = _nnue_network, last = 0;
         for (var i = 0; i < network.length; i++) if (network[i].act != null) {
             var div = document.createElement('div');
             div.className = "layer";
@@ -2007,7 +2013,41 @@ function showBoard() {
                 div.appendChild(div2);
             }
             elemact.appendChild(div);
+            if (i==0 && network[i].psqt && network[i].psqtWeights) {
+                var bucket = nnueBucket(pos), p0 = network[i].psqt[bucket], p1 = network[i].psqt[bucket+network[i].psqtBuckets];
+                var ps = ((p0 - p1) >> 1), po = network[i].posi, to = ps + po, w = (pos.w ? 1 : -1);
+                document.getElementById('nnuePsqt').children[0].innerText = "PSQT WHITE = " + (pos.w ? p0 : -p1) * w;
+                document.getElementById('nnuePsqt').children[1].innerText = "PSQT BLACK = " + (pos.w ? -p1 : p0) * w;
+                var elemtot = document.getElementById('nnueTotal');
+                while (elemtot.firstChild) elemtot.removeChild(elemtot.firstChild);
+                elemtot.appendChild(document.createElement('span'));
+                elemtot.appendChild(document.createElement('span'));
+                elemtot.appendChild(document.createElement('span'));
+                elemtot.children[0].innerText = "PSQT = "  + w*ps + " (" + (w*((ps/16)>>0) / PAWNVALUE).toFixed(2) + ")";
+                elemtot.children[1].innerText = "POS = "   + w*po + " (" + (w*((po/16)>>0) / PAWNVALUE).toFixed(2) + ")";
+                elemtot.children[2].innerText = "TOTAL = " + w*to + " (" + (w*((to/16)>>0) / PAWNVALUE).toFixed(2) + ")";
+            }
+            last = i;
         }
+        {
+            var div = document.createElement('div');
+            div.className = "layer";
+            var div2 = document.createElement('div');
+            div2.id = "N_" + (last + 2) + "_0";
+            div2.className = "neuron";
+            div2.style.backgroundColor = "#ffffff";
+            div2.style.color = "#000000";
+            div2.style.width = "auto";
+            div2.style.paddingLeft = "8px";
+            div2.style.paddingRight = "8px";
+            div2.innerText = network[0].posi;
+            div2.onmouseover = neuronHighlight;
+            div2.onmouseout = neuronHighlightEnd;
+            div2.title = "OUTPUT NEURON";
+            div.appendChild(div2);
+        }
+        elemact.appendChild(div);
+
         if (document.getElementById('neuronTooltip').style.display != "none") neuronShowWeights();
         var a = document.createElement('a');
         a.innerText = "download weights.png";
@@ -2541,7 +2581,7 @@ function neuronTooltipShow(display) {
     document.getElementById('neuronTooltip').style.display = display ? '' : 'none';
     if (display == false) {
         const oldnid = document.getElementById('neuronTooltip').nid;
-        if (oldnid != null) document.getElementById(oldnid).style.boxShadow = "";
+        if (oldnid != null && document.getElementById(oldnid) != null) document.getElementById(oldnid).style.boxShadow = "";
     }
 }
 function setupNeuronTooltip() {
@@ -2566,14 +2606,14 @@ function setupNeuronTooltip() {
     c = [e.clientX, e.clientY];
   }
 }
-
 function neuronShowWeights(nid, step) {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
     const oldnid = document.getElementById('neuronTooltip').nid;
     var thisid = nid == null ? oldnid : nid;
-    const hd = _nnue_network[0].output / 2;
+    const psqt = thisid[0] == "P";
+    const hd = psqt ? _nnue_network[0].psqtBuckets : _nnue_network[0].output / 2;
     var nj = parseInt(thisid.split("_")[2]);
-    if (step != null) nj = (nj + 2 * hd + step) % (2 * hd);
+    if (step != null) nj = (nj + (2 * hd) + step) % (2 * hd);
     thisid = thisid.split("_")[0]+"_"+thisid.split("_")[1]+"_"+nj;
     document.getElementById('neuronTooltip').nid = thisid;
     if (oldnid != null && oldnid.length > 0 && document.getElementById(oldnid) != null) document.getElementById(oldnid).style.boxShadow = "";
@@ -2581,24 +2621,37 @@ function neuronShowWeights(nid, step) {
     var saf = document.getElementById('neuronTooltip').saf || false;
     var per = document.getElementById('neuronTooltip').per || false;
     var pos = parseFEN(document.getElementById('fen').innerHTML);
-    var w = _nnue_network[0].weights;
+    var w = psqt ? _nnue_network[0].psqtWeights : _nnue_network[0].weights;
     var ctx = document.getElementById('ntCanvas').getContext("2d");
     ctx.clearRect(0, 0, 838, 334);
-    var p = pos.w ^ (nj < hd);
-    var features = saf ? nnuePosFeatures(!p ? pos : colorflip(pos)) : [], circles = [];
+    const p = pos.w ^ (nj < hd);
+    const offset = _nnue_network[0].type == "halfkp" ? 1 : 0;
+    var features = saf ? nnuePosFeatures(!p ? pos : colorflip(pos), !_nnue_network[0].flip && p) : [], circles = [];
+    var minw = [], maxw = [];
+    if (psqt) for (var j = nj % hd; j < w.length; j += hd) {
+        const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
+        const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
+        if ((rank == 0 || rank == 7) && (piece < 2) || (ki == pi % 64 && piece < 10) || (piece == 10 && ki != pi % 64 && Math.abs((ki % 8)-(pi % 8))<=1 && Math.abs(((ki / 8) >> 0)-rank)<=1)) continue;
+        minw[piece] = Math.min((minw[piece]||w[j]),w[j]);
+        maxw[piece] = Math.max((maxw[piece]||w[j]),w[j]);
+    }
     for (var j = nj % hd; j < w.length; j += hd) {
-        var c = Math.min(100, Math.max(0, 50 + w[j]));
-        const pi = (((j / hd) >> 0) % (11*64)), ki = ((((j / hd) >> 0) / (11*64)) >> 0);
+        const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
         const piece = (pi / 64) >> 0;
         const rank = ((pi % 64) / 8) >> 0;
+        if (_nnue_network[0].type == "halfkp" && piece >= 10) continue;
         var kipos = {x:ki % 8,y:(ki / 8) >> 0};
         var pipos = {x:pi % 8,y:rank};
         if ((rank == 0 || rank == 7) && (piece < 2) || (ki == pi % 64 && piece < 10) || (piece == 10 && ki != pi % 64 && Math.abs(kipos.x-pipos.x)<=1 && Math.abs(kipos.y-pipos.y)<=1)) {
             ctx.fillStyle = "rgba(0,0,0,1)";
         } else {
+            const c = Math.min(100, Math.max(0, 50 + (w[j]-(psqt?(maxw[piece]+minw[piece])/2:0))/(psqt?(maxw[piece]-minw[piece])/100:1)));
             ctx.fillStyle = "hsl("+(per?347:214)+", 47%, "+c+"%)";
         }
-        if (p != 0) { kipos = {x:kipos.x,y:7-kipos.y}; pipos = {x:pipos.x,y:7-pipos.y}; } 
+        if (_nnue_network[0].flip)
+            { if (p != 0) { kipos = {x:kipos.x,y:7-kipos.y}; pipos = {x:pipos.x,y:7-pipos.y}; } }
+        else 
+            { if (p != 0) { kipos = {x:7-kipos.x,y:7-kipos.y}; pipos = {x:7-pipos.x,y:7-pipos.y}; } }
         const blpos = {x:((piece / 2) >> 0),y:(piece == 10 ? (ki == pi % 64 ? 0 : 1) : piece % 2)};
         function perindex(pc, kc) {
             return 63 - ([0,1,3,6,10,15,21,28,36,43,49,54,58,61,63][7 + pc - kc] + Math.min(pc, kc));
@@ -2633,19 +2686,22 @@ function neuronShowWeights(nid, step) {
     }
     if (saf)
     {
-        var b = _nnue_network[0].biases[nj % hd];
-        total += b;
-        var text = "BIAS: " +  (b > 0 ? "+" : b < 0 ? "-" : "") + Math.abs(b), x = 8, y = 2 * 128 + 55 + 15;
-        ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left";  ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
-        ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
+        if (!psqt) {
+            var b = _nnue_network[0].biases[nj % hd];
+            total += b;
+            var text = "BIAS: " +  (b > 0 ? "+" : b < 0 ? "-" : "") + Math.abs(b), x = 8, y = 2 * 128 + 55 + 15;
+            ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left";  ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
+            ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
+        }
         text = " TOTAL: " + total; x = 25 + 128; y = 2 * 128 + 55 + 15;
         ctx.font = "bold 8px sans-serif"; ctx.textAlign = "right";  ctx.strokeStyle = '#000000';
         ctx.lineWidth = 1.5; ctx.strokeText(text, x, y);
         ctx.fillStyle = "#ffff00"; ctx.fillText(text, x, y);
     }
     ctx.fillStyle = "white"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("NEURON " + (nj+1) + " - ACTIVATION: " + _nnue_network[0].act[nj] + " - WEIGHTS RELATIVE TO " + (p == 0 ? "WHITE" : "BLACK") + " KING" , 8, 17);
+    if (psqt) ctx.fillText("PSQT " + (nj+1)+ " BUCKET " + (nj%hd) + " - RESULT: " + _nnue_network[0].psqt[nj] + " - SCALED WEIGHTS RELATIVE TO " + (p == 0 ? "WHITE" : "BLACK") + " KING", 8, 17);
+    else ctx.fillText("NEURON " + (nj+1) + " - ACTIVATION: " + _nnue_network[0].act[nj] + " - WEIGHTS RELATIVE TO " + (p == 0 ? "WHITE" : "BLACK") + " KING" , 8, 17);
     ctx.font = "bold 15px sans-serif"; ctx.textAlign = "center";
     const labels = ["PAWN", "KNIGHT", "BISHOP", "ROOK", "QUEEN", "KING"];
     for (var j = 0; j < labels.length; j++) ctx.fillText(labels[j], 25 + 64 + (128 + 6) * j, 47);
@@ -2658,22 +2714,28 @@ function neuronShowWeights(nid, step) {
 
     neuronTooltipShow(true);
 }
-
+function psqtShowWeights(w) {
+    var pos = parseFEN(document.getElementById('fen').innerHTML);
+    neuronShowWeights('P_0_'+((w^pos.w?_nnue_network[0].psqtBuckets:0)+nnueBucket(pos)));
+}
 function downloadWeightsPng() {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
-    const n = _nnue_network, hd = n[0].output / 2, canvas = document. createElement("canvas");
+    const n = _nnue_network, hd = n[0].output / 2, canvas = document.createElement("canvas");
     var addlines = 0;
     for (var i = 0; i < n.length; i++) {
-        if (n[i].name == "FeatureTransformer") { addlines += n[i].biases.length * 2; addlines += n[i].psqtWeights.length * 4; }
+        if (n[i].name == "FeatureTransformer") { addlines += n[i].biases.length * 2; if (n[i].psqtWeights) addlines += n[i].psqtWeights.length * 4; }
         else if (n[i].name == "AffineTransform") { addlines += n[i].biases.length * 4; addlines += n[i].weights.length; }
     }
-    addlines = Math.ceil((addlines / 3) / 4096);
-    canvas.width = 4096; canvas.height = addlines + 672 * (hd / 64);
+    const blockheight = _nnue_network[0].type == "halfkp" ? 608 : 672;
+    const width = _nnue_network[0].type == "halfkp" ? 64*64 : 104*64;
+    addlines = Math.ceil((addlines / 3) / width);
+    canvas.width = width; canvas.height = addlines + blockheight * Math.ceil(hd / (width/64));
     var ctx = canvas.getContext("2d"), imgData = ctx.createImageData(canvas.width, canvas.height);
     for (var j = 0; j < n[0].weights.length; j ++) {
-        const pi = (((j / hd) >> 0) % (11*64)), ki = ((((j / hd) >> 0) / (11*64)) >> 0);
+        const offset = _nnue_network[0].type == "halfkp" ? 1 : 0;
+        const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
         const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
-        if ((rank == 0 || rank == 7) && (piece == 0 || piece == 1)) continue;
+        if (_nnue_network[0].type == "halfkp" && piece >= 10) continue;        
         
         var r=0,g=0,b=0;
         if (ki != pi % 64 || piece == 10) {
@@ -2688,12 +2750,12 @@ function downloadWeightsPng() {
         const inpos = {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
         const d = piece < 2 ? -8 + 48 * piece : 48*2 + (piece - 2) * 64;
         var jhd = j % hd;
-        var x = inpos.x + 64 * (jhd % 64), y = inpos.y + d + 672 * ((jhd/64)>>0);
-        var ii = (x + y * 4096) * 4;
+        var x = inpos.x + 64 * (jhd % (width/64)), y = inpos.y + d + blockheight * ((jhd/(width/64))>>0);
+        var ii = (x + y * width) * 4;
         imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
     }
 
-    var i2 = (4096 * (canvas.height - addlines)) * 4;
+    var i2 = (width * (canvas.height - addlines)) * 4;
     function wa(a) {
         var ba = new Uint8Array(a.buffer);
         for (var i = 0; i < ba.length; i++) {
@@ -2702,7 +2764,7 @@ function downloadWeightsPng() {
         }
     }
     for (var i = 0; i < n.length; i++) {
-        if (n[i].name == "FeatureTransformer") { wa(n[i].biases); wa(n[i].psqtWeights); }
+        if (n[i].name == "FeatureTransformer") { wa(n[i].biases); if (n[i].psqtWeights) wa(n[i].psqtWeights); }
         else if (n[i].name == "AffineTransform") { wa(n[i].biases); wa(n[i].weights); }
     }
     while (i2 % 4 != 0) { imgData.data[i2] = 255; i2++; }
@@ -2710,7 +2772,8 @@ function downloadWeightsPng() {
 
     var element = document.createElement('a');
     element.setAttribute('href', canvas.toDataURL('image/png'));
-    element.setAttribute('download', 'weights.png');
+    var h = document.getElementById('nnueInfoHash').innerText.replace("(","").replace(")","").trim();
+    element.setAttribute('download', "weights"+(h.length>0?"_"+h:"")+".png");
     element.style.display = 'none';
     document.body.appendChild(element);
     element.click();
@@ -2726,23 +2789,32 @@ function nnueFileLoad(e) {
         var a = new Int8Array(fr.result), fp = a.byteOffset;
         function getBuffer(size) { fp += size; return a.buffer.slice(fp - size, fp); }
         var header = new Uint32Array(getBuffer(12)), version = header[0], hash = header[1], descSize = header[2];
-        if (version != 0x7AF32F20) { alert("unsupported network version"); return; }
+        if (version != 0x7AF32F20 && version != 0x7AF32F16 && version != 0x7AF32F17) { alert("unsupported network version"); return; }
         var desc = String.fromCharCode.apply(String, new Uint8Array(getBuffer(descSize)));
-        var network = [{name:"FeatureTransformer",input:11*64*64,output:1024,psqtBuckets:8,layerStacks:8}];
-        for (var i = 0; i < network[0].layerStacks; i++) {
-            network.push({name:"LayerStack", bucket:i});
-            network.push({name:"AffineTransform",input:1024,output:16});
-            network.push({name:"ClippedReLU"});
-            network.push({name:"AffineTransform",input:16,output:32});
-            network.push({name:"ClippedReLU"});
-            network.push({name:"AffineTransform",input:32,output:1});
-        }        
+        var network;
+        if (version == 0x7AF32F20) {
+            network = [{name:"FeatureTransformer",input:11*64*64,output:1024,type:"halfkav2",flip:true,psqtBuckets:8,layerStacks:8}];
+            for (var i = 0; i < network[0].layerStacks; i++) {
+                network.push({name:"LayerStack", bucket:i});
+                network.push({name:"AffineTransform",input:1024,output:16}); network.push({name:"ClippedReLU"});
+                network.push({name:"AffineTransform",input:16,output:32}); network.push({name:"ClippedReLU"});
+                network.push({name:"AffineTransform",input:32,output:1});
+            }
+        } else {
+            var ntype = 512;
+            for (var i = 1; i <= 64; i++) if (desc.indexOf("InputSlice["+(32*i)+"(0:"+(32*i)+")]") >= 0) ntype = 32*i;
+            network = [{name:"FeatureTransformer",input:64*(10*64+1),output:ntype,type:"halfkp",flip:version==0x7AF32F17},
+                       {name:"LayerStack"},
+                       {name:"AffineTransform",input:ntype,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:32}, {name:"ClippedReLU"},
+                       {name:"AffineTransform",input:32,output:1}];
+        }
         for (var i = 0; i < network.length; i++) {
             if (network[i].name == "FeatureTransformer") {
                 getBuffer(4); // Skip hash
                 network[i].biases = new Int16Array(getBuffer(network[i].output));
                 network[i].weights = new Int16Array(getBuffer(network[i].output * network[i].input));
-                network[i].psqtWeights = new Int32Array(getBuffer(network[i].psqtBuckets * network[i].input * 4));
+                if (network[i].psqtBuckets) network[i].psqtWeights = new Int32Array(getBuffer(network[i].psqtBuckets * network[i].input * 4));
             }
             if (network[i].name == "LayerStack") getBuffer(4); // Skip hash
             if (network[i].name == "AffineTransform") {
@@ -2754,6 +2826,8 @@ function nnueFileLoad(e) {
         _nnue_network = network;
         document.getElementById("nnueInfoFile").innerText = e.target.files[0].name;
         document.getElementById("nnueInfoDesc").innerText = desc;
+        document.getElementById("nnuePsqt").style.display = network[0].psqtWeights ? "inline-block" : "none";
+        document.getElementById("nnueTotal").style.display = network[0].psqtWeights ? "inline-block" : "none";
         try { crypto.subtle.digest('SHA-256', a).then((hashBuffer) => {
             document.getElementById("nnueInfoHash").innerText = " (" + Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).splice(0, 6).join('') + ")";
         }); } catch (e) {}
@@ -2764,42 +2838,46 @@ function nnueFileLoad(e) {
     setupNeuronTooltip();
 }
 
-function nnuePosFeatures(pos) {
-    var list = [], king = 0;
+function nnuePosFeatures(pos, flip) {
+    var list = [], king = 0, f = flip;
     for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
-        if (board(pos, x, y) == "K") { king = x + 8 * (7 - y); }
+        if (board(pos, x, y) == "K") { king = (f ? 7 - x : x) + 8 * (7 - y); }
     }
     for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) {
-        var index = Math.min(10, "PpNnBbRrQqKk".indexOf(board(pos, x, y)));
-        if (index >= 0) list.push((64 * 11) * king + 64 * index + x + 8 * (7 - y));
+        var index = "PpNnBbRrQqKk".indexOf(board(pos, x, y));
+        if(_nnue_network[0].type == "halfkp") index = index < 10 ? index : -1; else index = Math.min(10, index);
+        if (index >= 0) list.push((_nnue_network[0].type == "halfkp" ? 1 : 0) + (_nnue_network[0].input >> 6) * king + 64 * index + (f ? 7 - x : x) + 8 * (7 - y));
     }
     return list;
 }
 
+function nnueBucket(pos) {
+    var pieceCount = 0;
+    for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) pieceCount += board(pos, x, y) == "-" ?  0 : 1;
+    return ((pieceCount - 1) / 4) >> 0;
+}
 function nnueEvaluate(pos, saveAct) {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return null;
-    var network = _nnue_network, data = [], bucket = null, bucketSelected = false, psqt = 0;
+    var network = _nnue_network, data = [], psqtData = [], bucket = null, bucketSelected = false;
     for (var i = 0; i < network.length; i++) {
-        if (saveAct) network[i].act = null;
+        if (saveAct) { network[i].act = null; network[i].psqt = null }
         if (network[i].name == "LayerStack") bucketSelected = bucket == network[i].bucket;
         if (i > 0 && bucket != null && !bucketSelected) continue;
         if (network[i].name == "FeatureTransformer") {
-            if (network[i].layerStacks > 1) {
-                var pieceCount = 0;
-                for (var x = 0; x < 8; x++) for (var y = 0; y < 8; y++) pieceCount += board(pos, x, y) == "-" ?  0 : 1;
-                bucket = (((pieceCount - 1) / 4) >> 0);
-            }
-            var hd = network[i].output / 2, accumulation=[[],[]];
+            if (network[i].layerStacks > 1) bucket = nnueBucket(pos);
+            var hd = network[i].output / 2, accumulation=[[],[]], psqtAccumulation = [[],[]];
             for (var p = 0; p < 2; p++) {
+                var features = nnuePosFeatures(p==0 ? pos : colorflip(pos), p != 0 && !network[i].flip);
                 for (var j = 0; j < hd; j++) accumulation[p].push(network[i].biases[j]);
-                var features = nnuePosFeatures(p==0 ? pos : colorflip(pos));
-                for (var k = 0; k < features.length; k++) {
-                    for (var j = 0; j < hd; j++) accumulation[p][j] += network[i].weights[hd * features[k] + j];
-                    psqt += (pos.w ^ p ? 1  : -1) * network[i].psqtWeights[network[i].psqtBuckets * features[k] + bucket];
+                for (var k = 0; k < features.length; k++) for (var j = 0; j < hd; j++) accumulation[p][j] += network[i].weights[hd * features[k] + j];
+                if (network[i].psqtWeights) {
+                    for (var j = 0; j < network[i].psqtBuckets; j++) psqtAccumulation[p].push(0);
+                    for (var k = 0; k < features.length; k++) for (var j = 0; j < network[i].psqtBuckets; j++) psqtAccumulation[p][j] += network[i].psqtWeights[network[i].psqtBuckets * features[k] + j];
                 }
             }
             for (var j = 0; j < hd * 2 ;j++) data.push(Math.max(0, Math.min(127, accumulation[pos.w ^ (j < hd)][j % hd])));
-            if (saveAct) network[i].act = data;
+            if (network[i].psqtWeights) for (var j = 0; j < network[i].psqtBuckets * 2;j++) psqtData.push(psqtAccumulation[pos.w ^ (j < network[i].psqtBuckets)][j % network[i].psqtBuckets]);
+            if (saveAct) { network[i].act = data; network[i].psqt = psqtData; }
         } else if (network[i].name == "AffineTransform") {
             var odim = network[i].output, idim = network[i].input, output = [];
             for (var j = 0; j < odim; j++) {
@@ -2815,7 +2893,9 @@ function nnueEvaluate(pos, saveAct) {
             if (saveAct) network[i].act = data;
         }
     }
-    return Math.max(Math.min((((psqt>>1) + data[0]) / 16) >> 0, 31507), -31507) * (pos.w ? 1 : -1);
+    if (saveAct) network[0].posi = data[0];
+    const psqt = network[0].psqtWeights ? ((psqtData[bucket]-psqtData[network[0].psqtBuckets+bucket])>>1) : 0;
+    return Math.max(Math.min(((psqt + data[0]) / 16) >> 0, 31507), -31507) * (pos.w ? 1 : -1);
 }
 
 window.onload = function () {
