@@ -2720,39 +2720,70 @@ function psqtShowWeights(w) {
 }
 function downloadWeightsPng() {
     if (typeof _nnue_network === 'undefined' || _nnue_network == null) return;
-    const n = _nnue_network, hd = n[0].output / 2, canvas = document.createElement("canvas");
+    const n = _nnue_network, canvas = document.createElement("canvas");
     var addlines = 0;
     for (var i = 0; i < n.length; i++) {
-        if (n[i].name == "FeatureTransformer") { addlines += n[i].biases.length * 2; if (n[i].psqtWeights) addlines += n[i].psqtWeights.length * 4; }
+        if (n[i].name == "FeatureTransformer") { addlines += n[i].biases.length * 2; if (i == 0 && n[i].psqtWeights) addlines += 2 * (n[i].psqtWeights.length / (64*64)) * 4; }
         else if (n[i].name == "AffineTransform") { addlines += n[i].biases.length * 4; addlines += n[i].weights.length; }
     }
     const blockheight = _nnue_network[0].type == "halfkp" ? 608 : 672;
     const width = _nnue_network[0].type == "halfkp" ? 64*64 : 104*64;
     addlines = Math.ceil((addlines / 3) / width);
-    canvas.width = width; canvas.height = addlines + blockheight * Math.ceil(hd / (width/64));
+    canvas.width = width; canvas.height = addlines + blockheight * Math.ceil((n[0].output / 2 + (n[0].psqtWeights ? n[0].psqtBuckets : 0)) / (width/64));
     var ctx = canvas.getContext("2d"), imgData = ctx.createImageData(canvas.width, canvas.height);
-    for (var j = 0; j < n[0].weights.length; j ++) {
-        const offset = _nnue_network[0].type == "halfkp" ? 1 : 0;
-        const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
-        const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
-        if (_nnue_network[0].type == "halfkp" && piece >= 10) continue;        
-        
-        var r=0,g=0,b=0;
-        if (ki != pi % 64 || piece == 10) {
-            var v = -n[0].weights[j];
-            if (v >= 0 && v < 1020) { r=v<=255?v:v<=512?-v+510:0; g=v<=255?v:v<=765?255:-v+1020;b=v<=255?v:v<=510?255:v<=765?-v+765:0; }
-            else if (v < 0 && v > -1020) { r=v>=-255?-v:v>=-765?255:v+1020;g=v>=-255?-v:v>=-510?v+510:0;b=v>=-510?0:v>=-765?-v-510:v+1020; }
-            else { alert("error weight too big: "+ n[0].weights[j]); return; }
-        }
+    var w = [n[0].weights], psqtWeightsW = null, psqtWeightsMIN = null, psqtWeightsMAX = null;
+    if (n[0].psqtWeights) {
+        psqtWeightsMIN = new Int32Array(n[0].psqtWeights.length / (64*64));
+        psqtWeightsMAX = new Int32Array(n[0].psqtWeights.length / (64*64));
+        var getBPForIndex = function (j) {
+            const hd = n[0].psqtBuckets;
+            const offset = _nnue_network[0].type == "halfkp" ? 1 : 0;
+            const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
+            const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
 
-        var kipos = {x:ki % 8,y:(ki / 8) >> 0};
-        var pipos = {x:pi % 8,y:rank};
-        const inpos = {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
-        const d = piece < 2 ? -8 + 48 * piece : 48*2 + (piece - 2) * 64;
-        var jhd = j % hd;
-        var x = inpos.x + 64 * (jhd % (width/64)), y = inpos.y + d + blockheight * ((jhd/(width/64))>>0);
-        var ii = (x + y * width) * 4;
-        imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
+            if ((rank == 0 || rank == 7) && (piece < 2) || (ki == pi % 64 && piece < 10) || (piece == 10 && ki != pi % 64 && Math.abs((ki % 8)-(pi % 8))<=1 && Math.abs(((ki / 8) >> 0)-rank)<=1)) return -1;
+            return n[0].psqtBuckets * piece + (j % hd);
+        }
+        for (var j = 0; j < psqtWeightsMIN.length; j++) { psqtWeightsMIN[j] = (1<<30); psqtWeightsMAX[j] = -(1<<30); }
+        for (var j = 0; j < n[0].psqtWeights.length; j++) {
+            var val = n[0].psqtWeights[j];
+            var bp = getBPForIndex(j);
+            if (bp < 0) continue;
+            if (psqtWeightsMIN[bp] > val) psqtWeightsMIN[bp] = val;
+            if (psqtWeightsMAX[bp] < val) psqtWeightsMAX[bp] = val;
+        }
+        psqtWeightsW = new Int32Array(n[0].psqtWeights.length);
+        for (var j = 0; j < psqtWeightsW.length; j++) {
+            var bp = getBPForIndex(j);
+            psqtWeightsW[j] = (bp < 0 ? 0 : (n[0].psqtWeights[j] - ((psqtWeightsMIN[bp] + psqtWeightsMAX[bp]) >> 1))) * 512 / (psqtWeightsMAX[bp] - psqtWeightsMIN[bp]);
+        }
+        w.push(psqtWeightsW);
+    }
+    for (var i = 0; i < w.length; i++) {
+        var hd = i == 0 ? n[0].output / 2 : n[0].psqtBuckets;
+        for (var j = 0; j < w[i].length; j++) {
+            const offset = _nnue_network[0].type == "halfkp" ? 1 : 0;
+            const pi = ((((j / hd) >> 0)-offset) % (_nnue_network[0].input>>6)), ki = (((((j / hd) >> 0)-offset) / (_nnue_network[0].input>>6)) >> 0);
+            const piece = (pi / 64) >> 0, rank = ((pi % 64) / 8) >> 0;
+            if (_nnue_network[0].type == "halfkp" && piece >= 10) continue;        
+            
+            var r=0,g=0,b=0;
+            if (ki != pi % 64 || piece == 10) {
+                var v = -w[i][j];
+                if (v >= 0 && v < 1020) { r=v<=255?v:v<=512?-v+510:0; g=v<=255?v:v<=765?255:-v+1020;b=v<=255?v:v<=510?255:v<=765?-v+765:0; }
+                else if (v < 0 && v > -1020) { r=v>=-255?-v:v>=-765?255:v+1020;g=v>=-255?-v:v>=-510?v+510:0;b=v>=-510?0:v>=-765?-v-510:v+1020; }
+                else { alert("error weight too big: "+ w[i][j]); return; }
+            }
+
+            var kipos = {x:ki % 8,y:(ki / 8) >> 0};
+            var pipos = {x:pi % 8,y:rank};
+            const inpos = {x:(7-kipos.x)+pipos.x*8,y:kipos.y+(7-pipos.y)*8};
+            const d = piece < 2 ? -8 + 48 * piece : 48*2 + (piece - 2) * 64;
+            var jhd = i == 0 ? j % hd : (j % hd) + (n[0].output / 2);
+            var x = inpos.x + 64 * (jhd % (width/64)), y = inpos.y + d + blockheight * ((jhd/(width/64))>>0);
+            var ii = (x + y * width) * 4;
+            imgData.data[ii] = r; imgData.data[ii+1] = g; imgData.data[ii+2] = b; imgData.data[ii+3] = 255;
+        }
     }
 
     var i2 = (width * (canvas.height - addlines)) * 4;
@@ -2764,7 +2795,7 @@ function downloadWeightsPng() {
         }
     }
     for (var i = 0; i < n.length; i++) {
-        if (n[i].name == "FeatureTransformer") { wa(n[i].biases); if (n[i].psqtWeights) wa(n[i].psqtWeights); }
+        if (n[i].name == "FeatureTransformer") { wa(n[i].biases); if (i == 0 && n[i].psqtWeights) {wa(psqtWeightsMIN);wa(psqtWeightsMAX);} }
         else if (n[i].name == "AffineTransform") { wa(n[i].biases); wa(n[i].weights); }
     }
     while (i2 % 4 != 0) { imgData.data[i2] = 255; i2++; }
